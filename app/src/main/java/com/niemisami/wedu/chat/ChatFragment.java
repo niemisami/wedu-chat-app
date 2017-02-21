@@ -12,6 +12,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -36,6 +37,8 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.content.ContentValues.TAG;
 
 public class ChatFragment extends Fragment {
 
@@ -249,7 +252,17 @@ public class ChatFragment extends Fragment {
         addMessage(mUsername, message);
 
         // perform the sending message attempt.
-        mSocket.emit("new message", message);
+
+        JSONObject obj = new JSONObject();
+        try {
+
+            obj.put("username", mUsername);
+            obj.put("message", message.trim());
+            mSocket.emit("new message", obj);
+
+        } catch (JSONException e) {
+            Log.e(TAG, "attemptSend: ", e);
+        }
     }
 
     private void startSignIn() {
@@ -330,8 +343,10 @@ public class ChatFragment extends Fragment {
                         return;
                     }
 
-                    removeTyping(username);
-                    addMessage(username, message);
+                    if (!username.equals(mUsername)) {
+                        removeTyping(username);
+                        addMessage(username, message);
+                    }
                 }
             });
         }
@@ -397,7 +412,9 @@ public class ChatFragment extends Fragment {
                     } catch (JSONException e) {
                         return;
                     }
-                    addTyping(username);
+                    if(!username.equals(mUsername)) {
+                        addTyping(username);
+                    }
                 }
             });
         }
