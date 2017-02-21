@@ -29,7 +29,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         int layout = -1;
         switch (viewType) {
-            case Message.TYPE_MESSAGE:
+            case Message.TYPE_MESSAGE_OWN:
+                layout = R.layout.item_message_own;
+                break;
+            case Message.TYPE_MESSAGE_FRIEND:
                 layout = R.layout.item_message;
                 break;
             case Message.TYPE_LOG:

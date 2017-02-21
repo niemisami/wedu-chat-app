@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -176,7 +177,7 @@ public class ChatFragment extends Fragment {
         int numUsers = data.getIntExtra("numUsers", 1);
 
         addLog(getResources().getString(R.string.message_welcome));
-        addParticipantsLog(numUsers);
+//        addParticipantsLog(numUsers);
     }
 
     @Override
@@ -213,8 +214,13 @@ public class ChatFragment extends Fragment {
     }
 
     private void addMessage(String username, String message) {
-        mMessages.add(new Message.Builder(Message.TYPE_MESSAGE)
-                .username(username).message(message).build());
+        if (username.equals(mUsername)) {
+            mMessages.add(new Message.Builder(Message.TYPE_MESSAGE_OWN)
+                    .username(username).message(message).build());
+        } else {
+            mMessages.add(new Message.Builder(Message.TYPE_MESSAGE_FRIEND)
+                    .username(username).message(message).build());
+        }
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         scrollToBottom();
     }
@@ -368,6 +374,7 @@ public class ChatFragment extends Fragment {
                         return;
                     }
 
+                    Log.d(TAG, "run: user joined");
                     addLog(getResources().getString(R.string.message_user_joined, username));
                     addParticipantsLog(numUsers);
                 }
