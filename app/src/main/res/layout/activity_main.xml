@@ -1,13 +1,73 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             xmlns:tools="http://schemas.android.com/tools"
-             android:id="@+id/container"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent"
-             tools:context=".MainActivity"
-             tools:ignore="MergeRootFrame">
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
 
-    <fragment
-            class="com.niemisami.wedu.chat.ChatFragment"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <android.support.design.widget.AppBarLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-</FrameLayout>
+            android:layout_height="wrap_content"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+            <include
+                layout="@layout/toolbar" />
+        </android.support.design.widget.AppBarLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <android.support.v4.widget.SlidingPaneLayout
+                android:id="@+id/sliding_pane"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <!--<fragment-->
+                <!--android:id="@+id/fragment_log"-->
+                <!--android:name="com.trc.heartacheapp.HolterBluetooth.HolterLogFragment"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--tools:layout="@layout/fragment_holter_log" />-->
+
+                <fragment
+                    class="com.niemisami.wedu.chat.ChatFragment"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </android.support.v4.widget.SlidingPaneLayout>
+        </FrameLayout>
+    </LinearLayout>
+
+    <!--<com.github.clans.fab.FloatingActionMenu-->
+        <!--android:id="@+id/fab_menu"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_alignParentEnd="true"-->
+        <!--android:paddingBottom="10dp"-->
+        <!--android:paddingLeft="10dp"-->
+        <!--android:paddingRight="10dp"-->
+        <!--android:visibility="gone"-->
+        <!--fab:menu_backgroundColor="#ccffffff"-->
+        <!--fab:menu_colorNormal="@color/accent"-->
+        <!--fab:menu_icon="@drawable/ic_add"-->
+        <!--fab:menu_labels_ellipsize="end"-->
+        <!--fab:menu_labels_singleLine="true">-->
+
+        <!--<com.github.clans.fab.FloatingActionButton-->
+            <!--android:id="@+id/fab1"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:src="@drawable/ic_add"-->
+            <!--fab:fab_label="additional functions"-->
+            <!--fab:fab_size="mini"-->
+            <!--fab:menu_colorNormal="@color/accent" />-->
+    <!--</com.github.clans.fab.FloatingActionMenu>-->
+</android.support.design.widget.CoordinatorLayout>
+
