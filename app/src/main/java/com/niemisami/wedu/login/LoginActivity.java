@@ -24,7 +24,6 @@ import org.json.JSONObject;
 public class LoginActivity extends AppCompatActivity {
 
     private EditText mUsernameView;
-
     private String mUsername;
 
     private Socket mSocket;

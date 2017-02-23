@@ -177,7 +177,7 @@ public class ChatFragment extends Fragment {
         int numUsers = data.getIntExtra("numUsers", 1);
 
         addLog(getResources().getString(R.string.message_welcome));
-//        addParticipantsLog(numUsers);
+        addParticipantsLog(numUsers);
     }
 
     @Override
@@ -375,7 +375,6 @@ public class ChatFragment extends Fragment {
                         return;
                     }
 
-                    Log.d(TAG, "run: user joined");
                     addLog(getResources().getString(R.string.message_user_joined, username));
                     addParticipantsLog(numUsers);
                 }
@@ -420,7 +419,7 @@ public class ChatFragment extends Fragment {
                     } catch (JSONException e) {
                         return;
                     }
-                    if(!username.equals(mUsername)) {
+                    if (!username.equals(mUsername)) {
                         addTyping(username);
                     }
                 }
@@ -453,7 +452,16 @@ public class ChatFragment extends Fragment {
             if (!mTyping) return;
 
             mTyping = false;
-            mSocket.emit("stop typing");
+
+            JSONObject obj = new JSONObject();
+            try {
+
+                obj.put("username", mUsername);
+                mSocket.emit("stop typing", obj);
+
+            } catch (JSONException e) {
+                Log.e(TAG, "attemptSend: ", e);
+            }
         }
     };
 }
