@@ -32,6 +32,7 @@ import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
+import com.niemisami.wedu.utilities.ToolbarUpdater;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
+import static com.niemisami.wedu.R.id.username;
 
 public class ChatFragment extends Fragment {
 
@@ -47,6 +49,7 @@ public class ChatFragment extends Fragment {
 
     private static final int TYPING_TIMER_LENGTH = 600;
 
+    private ToolbarUpdater mToolbarUpdater;
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
     private List<Message> mMessages = new ArrayList<>();
@@ -64,6 +67,8 @@ public class ChatFragment extends Fragment {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        if (context instanceof ToolbarUpdater)
+            mToolbarUpdater = (ToolbarUpdater) context;
         mAdapter = new MessageAdapter(context, mMessages);
     }
 
@@ -211,7 +216,7 @@ public class ChatFragment extends Fragment {
     }
 
     private void addParticipantsLog(int numUsers) {
-        addLog(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
+        mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
     }
 
     private void addMessage(String username, String message) {
@@ -256,14 +261,12 @@ public class ChatFragment extends Fragment {
         }
 
         mInputMessageView.setText("");
-        addMessage(mUsername, message);
+//        addMessage(mUsername, message);
 
         // perform the sending message attempt.
 
         JSONObject obj = new JSONObject();
         try {
-
-            obj.put("username", mUsername);
             obj.put("message", message.trim());
             mSocket.emit("new message", obj);
 
@@ -296,12 +299,23 @@ public class ChatFragment extends Fragment {
                 @Override
                 public void run() {
                     if (!isConnected) {
-                        if (null != mUsername)
-                            mSocket.emit("add user", mUsername);
-                        Toast.makeText(getActivity().getApplicationContext(),
-                                R.string.connect, Toast.LENGTH_LONG).show();
-                        isConnected = true;
+                        if (null != mUsername) {
+
+                            JSONObject obj = new JSONObject();
+                            try {
+                                obj.put("username", mUsername);
+                                mSocket.emit("add user", obj);
+                            } catch (JSONException e) {
+                                Log.e(TAG, "attemptSend: ", e);
+                            }
+
+                        } else {
+                            getActivity().finish();
+                        }
                     }
+                    Toast.makeText(getActivity().getApplicationContext(),
+                            R.string.connect, Toast.LENGTH_LONG).show();
+                    isConnected = true;
                 }
             });
         }
@@ -349,11 +363,10 @@ public class ChatFragment extends Fragment {
                     } catch (JSONException e) {
                         return;
                     }
+                    Log.d(TAG, "run: " + data.toString());
 
-                    if (!username.equals(mUsername)) {
-                        removeTyping(username);
-                        addMessage(username, message);
-                    }
+                    removeTyping(username);
+                    addMessage(username, message);
                 }
             });
         }
@@ -419,9 +432,7 @@ public class ChatFragment extends Fragment {
                     } catch (JSONException e) {
                         return;
                     }
-                    if (!username.equals(mUsername)) {
-                        addTyping(username);
-                    }
+                    addTyping(username);
                 }
             });
         }
