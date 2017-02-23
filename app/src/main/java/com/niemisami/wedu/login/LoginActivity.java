@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -23,8 +24,9 @@ import org.json.JSONObject;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText mUsernameView;
+    private static final String TAG = LoginActivity.class.getSimpleName();
 
+    private EditText mUsernameView;
     private String mUsername;
 
     private Socket mSocket;
@@ -93,11 +95,17 @@ public class LoginActivity extends AppCompatActivity {
             mUsernameView.requestFocus();
             return;
         }
-
         mUsername = username;
 
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("username", mUsername);
+        }catch (JSONException e) {
+            Log.e(TAG, "attemptLogin: ", e);
+        }
+
         // perform the user login attempt.
-        mSocket.emit("add user", username);
+        mSocket.emit("add user", obj);
     }
 
     private Emitter.Listener onLogin = new Emitter.Listener() {
