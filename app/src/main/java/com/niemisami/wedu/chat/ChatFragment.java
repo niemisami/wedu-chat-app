@@ -3,13 +3,11 @@ package com.niemisami.wedu.chat;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -32,7 +30,7 @@ import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
-import com.niemisami.wedu.utilities.ToolbarUpdater;
+import com.niemisami.wedu.utils.ToolbarUpdater;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
-import static com.niemisami.wedu.R.id.username;
 
 public class ChatFragment extends Fragment {
 

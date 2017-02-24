@@ -6,16 +6,18 @@ package com.niemisami.wedu.chat;
 
 public class Message {
 
-    public static final int TYPE_MESSAGE_OWN = 0;
-    public static final int TYPE_MESSAGE_FRIEND = 1;
-    public static final int TYPE_LOG = 2;
-    public static final int TYPE_ACTION = 3;
+    public static final int TYPE_MESSAGE_QUESTION = 0;
+    public static final int TYPE_MESSAGE_OWN = 1;
+    public static final int TYPE_MESSAGE_FRIEND = 2;
+
+    public static final int TYPE_LOG = 100;
+    public static final int TYPE_ACTION = 101;
 
     private int mType;
     private String mMessage;
     private String mUsername;
 
-    private Message() {
+    protected Message() {
     }
 
     public int getType() {
@@ -32,9 +34,9 @@ public class Message {
 
 
     public static class Builder {
-        private final int mType;
-        private String mUsername;
-        private String mMessage;
+        protected final int mType;
+        protected String mUsername;
+        protected String mMessage;
 
         public Builder(int type) {
             mType = type;

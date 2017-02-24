@@ -1,4 +1,4 @@
-package com.niemisami.wedu.utilities;
+package com.niemisami.wedu.utils;
 
 /**
  * Created by Sami on 23.2.2017.
