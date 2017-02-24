@@ -14,7 +14,14 @@ public class Question extends Message {
     private int mUpvotes;
     private boolean mIsSolved;
 
-    private Question() {
+    private Question(Builder builder) {
+        super(builder);
+        //      question.mLecture = mLecture; // Currently testing with only one lecture "Koodikerho"
+        mCourseId = builder.mCourseId;
+        mUpvotes = builder.mUpvotes;
+        mCreated = builder.mCreated;
+        mIsSolved = builder.mIsSolved;
+
     }
 
     public String getCourseId() {
@@ -37,6 +44,26 @@ public class Question extends Message {
         return mIsSolved;
     }
 
+
+    @Override
+    public Builder toBuilder() {
+        return (Builder) super.toBuilder();
+    }
+
+    @Override
+    protected Builder newBuilder() {
+        return new Builder(getType());
+    }
+
+    protected Builder decorate(Builder builder) {
+        super.decorate(builder);
+        return builder
+                .created(getCreated())
+                .lecture(getLecture())
+                .courseId(getCourseId())
+                .upvotes(getUpvotes());
+    }
+
     public static class Builder extends Message.Builder {
         private String mCourseId;
         private String mLecture;
@@ -44,50 +71,48 @@ public class Question extends Message {
         private int mUpvotes;
         private boolean mIsSolved;
 
-
         public Builder(int type) {
             super(type);
         }
 
-        public Question.Builder courseId(String course) {
+        public Builder courseId(String course) {
             mCourseId = course;
             return this;
         }
 
-        public Question.Builder lecture(String lecture) {
+        public Builder lecture(String lecture) {
             mLecture = lecture;
             return this;
         }
 
-        public Question.Builder created(long created) {
+        public Builder created(long created) {
             mCreated = created;
             return this;
         }
 
-        public Question.Builder upvote() {
-            mUpvotes++;
+        public Builder upvotes(int upvotes) {
+            mUpvotes = upvotes;
             return this;
         }
 
-        public Question.Builder downvote() {
-            mUpvotes--;
-            return this;
-        }
-
-        public Question.Builder solved(boolean isSolved) {
+        public Builder solved(boolean isSolved) {
             mIsSolved = isSolved;
             return this;
         }
 
-        public Question build() {
-            Question question = new Question();
-            question.mCourseId = mCourseId;
-//            question.mLecture = mLecture; // Currently testing with only one lecture "Koodikerho"
-            question.mUpvotes = mUpvotes;
-            question.mCreated = mCreated;
-            question.mIsSolved = mIsSolved;
+        @Override
+        public Builder username(String username) {
+            return (Builder) super.username(username);
+        }
 
-            return question;
+        @Override
+        public Builder message(String message) {
+            return (Builder) super.message(message);
+        }
+
+        @Override
+        public Question build() {
+            return new Question(this);
         }
     }
 }

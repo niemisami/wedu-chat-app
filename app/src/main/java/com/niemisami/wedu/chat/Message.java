@@ -1,5 +1,7 @@
 package com.niemisami.wedu.chat;
 
+import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
+
 /**
  * Created by Sami on 21.2.2017.
  */
@@ -17,7 +19,10 @@ public class Message {
     private String mMessage;
     private String mUsername;
 
-    protected Message() {
+    protected Message(Builder builder) {
+        mType = builder.mType;
+        mMessage = builder.mMessage;
+        mUsername = builder.mUsername;
     }
 
     public int getType() {
@@ -33,10 +38,29 @@ public class Message {
     }
 
 
+    public Builder toBuilder() {
+        return decorate(newBuilder());
+    }
+
+    protected Builder decorate(Builder builder) {
+        return builder
+                .username(getUsername())
+                .message(getMessage());
+    }
+
+    protected Builder newBuilder() {
+        return new Builder(getType());
+    }
+
+
+
+
+
     public static class Builder {
         protected final int mType;
         protected String mUsername;
         protected String mMessage;
+
 
         public Builder(int type) {
             mType = type;
@@ -53,11 +77,8 @@ public class Message {
         }
 
         public Message build() {
-            Message message = new Message();
-            message.mType = mType;
-            message.mUsername = mUsername;
-            message.mMessage = mMessage;
-            return message;
+            return new Message(this);
         }
     }
+
 }

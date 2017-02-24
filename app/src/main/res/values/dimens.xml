@@ -8,4 +8,23 @@
     <dimen name="message_text">16sp</dimen>
     <dimen name="margin_large">64dp</dimen>
     <dimen name="round_button">40dp</dimen>
+
+    <!--Dimensions from Google Codelabs https://github.com/googlecodelabs/android-design-library/blob/master/6-PageElement/src/main/res/values/dimens.xml -->
+
+    <dimen name="card_height">304dp</dimen>
+    <dimen name="md_keylines">16dp</dimen>
+    <dimen name="tile_padding">8dp</dimen>
+    <dimen name="tile_height">160dp</dimen>
+    <dimen name="app_bar_height">256dp</dimen>
+    <dimen name="article_keylines">72dp</dimen>
+    <dimen name="avator_size">40dp</dimen>
+    <dimen name="card_title_height">40dp</dimen>
+    <dimen name="article_titles">20sp</dimen>
+    <dimen name="cards_button_width">48dp</dimen>
+    <dimen name="cards_button_height">48dp</dimen>
+    <dimen name="article_subheading">16sp</dimen>
+    <dimen name="card_image_height">200dp</dimen>
+    <dimen name="list_body">14sp</dimen>
+    <dimen name="navheader_height">222dp</dimen>
+
 </resources>

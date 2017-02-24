@@ -10,7 +10,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.niemisami.wedu.R;
-import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.utils.WeduDateUtils;
 

@@ -21,7 +21,6 @@
     <string name="user_action_typing">is typing</string>
 
 
-
     <!-- For labelling today's forecast -->
     <string name="today">Today</string>
 
@@ -32,6 +31,9 @@
     <string name="format_full_friendly_date">
         <xliff:g id="month">%1$s</xliff:g>, <xliff:g id="day">%2$s</xliff:g>
     </string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 
 </resources>
