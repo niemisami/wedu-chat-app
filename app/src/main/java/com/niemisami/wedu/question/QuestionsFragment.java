@@ -19,6 +19,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
+import static android.os.Build.VERSION_CODES.M;
 import static com.niemisami.wedu.R.id.linearLayout;
 
 /**
@@ -50,7 +52,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     private ToolbarUpdater mToolbarUpdater;
     private FabUpdater mFabUpdater;
     private RecyclerView mQuestionsView;
-    private LinearLayout mQuestionInputField;
+    private RelativeLayout mQuestionInputField;
     private ImageButton mSendQuestionButton;
     private List<Question> mQuestions;
     private QuestionsAdapter mAdapter;
@@ -138,7 +140,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             }
         });
 
-        mQuestionInputField = (LinearLayout) view.findViewById(R.id.message_input_layout);
+        mQuestionInputField = (RelativeLayout   ) view.findViewById(R.id.message_input_layout);
 //        mQuestionInputField.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         mSendQuestionButton = (ImageButton) view.findViewById(R.id.send_button);
         mSendQuestionButton.setOnClickListener(new View.OnClickListener() {
@@ -368,11 +370,31 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     @Override
     public void onUpvoteClick(int itemPosition) {
+        if(itemPosition >= 0) {
+            Question votedQuestion = mQuestions.get(itemPosition);
+            int currentUpvotes = votedQuestion.getUpvotes();
+            final Question upvotedQuestion = votedQuestion.toBuilder().upvotes(++currentUpvotes).build();
+            mQuestions.remove(itemPosition);
+            mQuestions.add(itemPosition, upvotedQuestion);
+            mAdapter.notifyDataSetChanged();
+        } else {
+            Log.w(TAG, "onDownvoteClick: tried to upvote negative index");
+        }
 
     }
 
     @Override
     public void onDownvoteClick(int itemPosition) {
+        if(itemPosition >= 0) {
+            Question votedQuestion = mQuestions.get(itemPosition);
+            int currentUpvotes = votedQuestion.getUpvotes();
+            final Question downvotedQuestion = votedQuestion.toBuilder().upvotes(--currentUpvotes).build();
+            mQuestions.remove(itemPosition);
+            mQuestions.add(itemPosition, downvotedQuestion);
+            mAdapter.notifyDataSetChanged();
+        } else {
+            Log.w(TAG, "onDownvoteClick: tried to downvote negative index");
+        }
 
     }
 

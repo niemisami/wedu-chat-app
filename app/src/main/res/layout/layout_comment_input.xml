@@ -1,34 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/message_input_layout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"
-    android:gravity="center_vertical"
     android:layout_gravity="bottom"
     android:background="@color/login_background"
-    android:orientation="horizontal"
+    android:gravity="center_vertical"
     android:padding="@dimen/md_keylines">
 
-    <EditText
-        android:id="@+id/message_input"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:hint="@string/prompt_message"
-        android:imeActionId="@+id/send"
-        android:imeActionLabel="@string/action_send"
-        android:imeOptions="actionSend"
-        android:inputType="text" />
 
     <ImageButton
         android:id="@+id/send_button"
         style="@style/Widget.AppCompat.Button"
         android:layout_width="@dimen/fab_size_normal"
         android:layout_height="@dimen/fab_size_normal"
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
         android:background="@drawable/circle"
         android:contentDescription="@string/action_send"
         android:src="@drawable/ic_send" />
 
-</LinearLayout>
+    <EditText
+        android:id="@+id/message_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toStartOf="@id/send_button"
+        android:hint="@string/prompt_message"
+        android:imeActionId="@+id/send"
+        android:imeActionLabel="@string/action_send"
+        android:imeOptions="actionSend"
+        android:inputType="text" />
+
+
+</RelativeLayout>
 
