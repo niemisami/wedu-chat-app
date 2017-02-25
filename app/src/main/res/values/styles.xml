@@ -1,7 +1,7 @@
 <resources>
 
 
-    <style name="AppTheme" parent="AppTheme.Base"></style>
+    <style name="AppTheme" parent="AppTheme.Base"/>
 
     <!-- Base application theme. -->
     <style name="AppTheme.Base" parent="Theme.AppCompat.Light.NoActionBar">
@@ -15,6 +15,13 @@
         <item name="android:textColorSecondary">@color/ambient_white</item>
         <item name="android:textColor">@color/primary</item>
         <item name="actionMenuTextColor">@color/primary</item>
+    </style>
+
+    <style name="ProgressBarStyle" parent="@android:style/Widget.ProgressBar">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="colorAccent">@color/ambient_white</item>
+        <item name="android:indeterminate">true</item>
     </style>
 
 </resources>

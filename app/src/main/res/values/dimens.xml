@@ -6,6 +6,7 @@
     <dimen name="spacing">8dp</dimen>
     <dimen name="spacing_tiny">4dp</dimen>
     <dimen name="message_text">16sp</dimen>
+    <dimen name="size_app_label">80sp</dimen>
     <dimen name="margin_large">64dp</dimen>
     <dimen name="round_button">40dp</dimen>
 

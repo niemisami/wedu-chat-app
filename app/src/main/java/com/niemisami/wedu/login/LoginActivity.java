@@ -1,7 +1,8 @@
 package com.niemisami.wedu.login;
 
-import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Typeface;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -9,15 +10,21 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
+import com.niemisami.wedu.utils.AnimationHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,6 +38,11 @@ public class LoginActivity extends AppCompatActivity {
 
     private Socket mSocket;
     private Toolbar mToolbar;
+    private boolean mTryingToLogin;
+
+    private ProgressBar mLoginProgressBar;
+    private Handler mLoginTimeoutHandler;
+    private static final int LOGIN_TIMEOUT = 5000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,6 +56,12 @@ public class LoginActivity extends AppCompatActivity {
         WeduApplication app = (WeduApplication) getApplication();
         mSocket = app.getSocket();
 
+        mLoginTimeoutHandler = new Handler();
+
+        TextView appLabel = (TextView)findViewById(R.id.label_app_title);
+        Typeface custom_font = Typeface.createFromAsset(getAssets(),  "fonts/Lobster-Regular.ttf");
+        appLabel.setTypeface(custom_font);
+        
         // Set up the login form.
         mUsernameView = (EditText) findViewById(R.id.username_input);
         mUsernameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -57,7 +75,8 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        Button signInButton = (Button) findViewById(R.id.sign_in_button);
+        mLoginProgressBar = (ProgressBar) findViewById(R.id.login_progress_bar);
+        FrameLayout signInButton = (FrameLayout) findViewById(R.id.sign_in_button);
         signInButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -72,6 +91,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
+        mLoginTimeoutHandler.removeCallbacksAndMessages(null);
         mSocket.off("login", onLogin);
     }
 
@@ -82,30 +102,45 @@ public class LoginActivity extends AppCompatActivity {
      */
     private void attemptLogin() {
         // Reset errors.
-        mUsernameView.setError(null);
+        if (!mTryingToLogin) {
+            mTryingToLogin = true;
+            AnimationHelper.alphaIn(mLoginProgressBar);
+            mUsernameView.setError(null);
 
-        // Store values at the time of the login attempt.
-        String username = mUsernameView.getText().toString().trim();
+            // Store values at the time of the login attempt.
+            String username = mUsernameView.getText().toString().trim();
 
-        // Check for a valid username.
-        if (TextUtils.isEmpty(username)) {
-            // There was an error; don't attempt login and focus the first
-            // form field with an error.
-            mUsernameView.setError(getString(R.string.error_field_required));
-            mUsernameView.requestFocus();
-            return;
+            // Check for a valid username.
+            if (TextUtils.isEmpty(username)) {
+                // There was an error; don't attempt login and focus the first
+                // form field with an error.
+                mUsernameView.setError(getString(R.string.error_field_required));
+                mUsernameView.requestFocus();
+                mTryingToLogin = false;
+                AnimationHelper.alphaOut(mLoginProgressBar);
+                return;
+            }
+            mUsername = username;
+
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("username", mUsername);
+            } catch (JSONException e) {
+                Log.e(TAG, "attemptLogin: ", e);
+            }
+
+            // perform the user login attempt.
+            mSocket.emit("add user", obj);
+
+            mLoginTimeoutHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mTryingToLogin = false;
+                    AnimationHelper.alphaOut(mLoginProgressBar);
+                    displayToast(getString(R.string.error_connect));
+                }
+            }, LOGIN_TIMEOUT);
         }
-        mUsername = username;
-
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("username", mUsername);
-        }catch (JSONException e) {
-            Log.e(TAG, "attemptLogin: ", e);
-        }
-
-        // perform the user login attempt.
-        mSocket.emit("add user", obj);
     }
 
     private Emitter.Listener onLogin = new Emitter.Listener() {
@@ -127,4 +162,8 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         }
     };
+
+    private void displayToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
 }

@@ -32,8 +32,11 @@
         <xliff:g id="month">%1$s</xliff:g>, <xliff:g id="day">%2$s</xliff:g>
     </string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="lorem_long">Bacon ipsum dolor amet this placeholder text is gonna be HUGE. You’re disgusting. I know words. I have the best words.
+        That other text? Sadly, it’s no longer a 10. Be careful, or I will spill the beans on your placeholder text. Lorem Ipsum is the single
+        greatest threat. We are not - we are not keeping up with other websites. I think my strongest asset maybe by far is my temperament.
+        I have a placeholding temperament. Lorem Ipsum is unattractive, both inside and out. I fully understand why it’s former users left it for something else. They made a good decision.</string>
+    <string name="lorem">Bacon ipsum dolor amet You’re disgusting.</string>
 
 
 </resources>
