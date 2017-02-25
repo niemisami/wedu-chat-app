@@ -49,11 +49,6 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
         notifyDataSetChanged();
     }
 
-    public void addQuestion(Question question) {
-        mQuestions.add(question);
-        notifyDataSetChanged();
-    }
-
     @Override
     public QuestionAdapterViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         int layout = -1;
@@ -108,7 +103,7 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
         }
 
         public void displayAsSolved(boolean solved) {
-            int displayIcon = (solved ? View.VISIBLE : View.GONE);
+            int displayIcon = (solved ? View.VISIBLE : View.INVISIBLE);
             mSolvedIcon.setVisibility(displayIcon);
         }
 
@@ -118,13 +113,13 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
             long normalizedDate = WeduDateUtils.normalizeDate(dateMillis);
             String dateString = WeduDateUtils.getFriendlyDateString(mContext, normalizedDate, true);
             mCreatedView.setText(dateString);
-            View parent = (View) mCreatedView.getParent();
-            parent.setBackgroundColor(getQuestionBackgroundColor(dateString));
         }
 
         public void setQuestionMessage(String message) {
             if (null == mQuestionView) return;
             mQuestionView.setText(message);
+            View parent = (View) mCreatedView.getParent();
+            parent.setBackgroundColor(getQuestionBackgroundColor(message.substring(0,7)));
         }
 
         public void setUpvotes(int upvotes) {
