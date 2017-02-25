@@ -1,15 +1,29 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/login_background">
+    android:animateLayoutChanges="true"
+    android:background="@color/login_background"
+    android:orientation="vertical">
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/questions"
+
+    <include
+        android:id="@+id/message_input_layout"
+        layout="@layout/layout_comment_input"
+        android:visibility="gone" />
+
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scrollbarStyle="outsideOverlay"
-        android:scrollbars="vertical" />
+        android:layout_above="@+id/message_input_layout">
 
-</FrameLayout>
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/questions"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:animateLayoutChanges="false"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbars="vertical" />
+    </FrameLayout>
+
+</RelativeLayout>

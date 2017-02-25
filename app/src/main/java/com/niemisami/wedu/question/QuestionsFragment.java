@@ -1,6 +1,7 @@
 package com.niemisami.wedu.question;
 
 
+import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -15,14 +16,19 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.Socket;
+import com.niemisami.wedu.MainActivity;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
+import com.niemisami.wedu.utils.FabUpdater;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 
 import org.json.JSONException;
@@ -32,24 +38,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
+import static com.niemisami.wedu.R.id.linearLayout;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler {
+public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler, MainActivity.OnFabClickListener{
 
     private static final int REQUEST_LOGIN = 0;
 
-    private static final int TYPING_TIMER_LENGTH = 600;
-
     private ToolbarUpdater mToolbarUpdater;
+    private FabUpdater mFabUpdater;
     private RecyclerView mQuestionsView;
+    private LinearLayout mQuestionInputField;
+    private ImageButton mSendQuestionButton;
     private List<Question> mQuestions;
     private QuestionsAdapter mAdapter;
     private String mUsername;
     private Socket mSocket;
 
     private Boolean isConnected = true;
+
 
     public QuestionsFragment() {
     }
@@ -59,6 +68,9 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         super.onAttach(context);
         if (context instanceof ToolbarUpdater)
             mToolbarUpdater = (ToolbarUpdater) context;
+        if(context instanceof FabUpdater) {
+            mFabUpdater = (FabUpdater) context;
+        }
         mAdapter = new QuestionsAdapter(context, this);
     }
 
@@ -114,6 +126,29 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mQuestionsView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mQuestionsView.setAdapter(mAdapter);
         mAdapter.setQuestions(mQuestions);
+
+        mQuestionsView.setOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                if(dy > 0) {
+                    mFabUpdater.hideFab();
+                } else if(dy < 0) {
+                    mFabUpdater.showFab();
+                }
+            }
+        });
+
+        mQuestionInputField = (LinearLayout) view.findViewById(R.id.message_input_layout);
+//        mQuestionInputField.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
+        mSendQuestionButton = (ImageButton) view.findViewById(R.id.send_button);
+        mSendQuestionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mQuestionInputField.setVisibility(View.GONE);
+                mFabUpdater.showFab();
+            }
+        });
+
 
     }
 
@@ -344,5 +379,14 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     @Override
     public void onQuestionClick(int itemPosition) {
 
+    }
+
+    @Override
+    public void onFabClicked() {
+        displaQuestionInputField();
+    }
+
+    private void displaQuestionInputField() {
+        mQuestionInputField.setVisibility(View.VISIBLE);
     }
 }
