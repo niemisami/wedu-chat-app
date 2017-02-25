@@ -1,34 +1,27 @@
-package com.niemisami.wedu.chat;
+package com.niemisami.wedu.question;
+
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
+import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 
@@ -40,25 +33,25 @@ import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
-public class ChatFragment extends Fragment {
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler {
 
     private static final int REQUEST_LOGIN = 0;
 
     private static final int TYPING_TIMER_LENGTH = 600;
 
     private ToolbarUpdater mToolbarUpdater;
-    private RecyclerView mMessagesView;
-    private EditText mInputMessageView;
-    private List<Message> mMessages = new ArrayList<>();
-    private RecyclerView.Adapter mAdapter;
-    private boolean mTyping = false;
-    private Handler mTypingHandler = new Handler();
+    private RecyclerView mQuestionsView;
+    private List<Question> mQuestions;
+    private QuestionsAdapter mAdapter;
     private String mUsername;
     private Socket mSocket;
 
     private Boolean isConnected = true;
 
-    public ChatFragment() {
+    public QuestionsFragment() {
     }
 
     @Override
@@ -66,7 +59,7 @@ public class ChatFragment extends Fragment {
         super.onAttach(context);
         if (context instanceof ToolbarUpdater)
             mToolbarUpdater = (ToolbarUpdater) context;
-        mAdapter = new MessageAdapter(context, mMessages);
+        mAdapter = new QuestionsAdapter(context, this);
     }
 
 
@@ -82,11 +75,9 @@ public class ChatFragment extends Fragment {
         mSocket.on(Socket.EVENT_DISCONNECT, onDisconnect);
         mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        mSocket.on("new message", onNewMessage);
+        mSocket.on("new message", onNewQuestion);
         mSocket.on("user joined", onUserJoined);
         mSocket.on("user left", onUserLeft);
-        mSocket.on("typing", onTyping);
-        mSocket.on("stop typing", onStopTyping);
         mSocket.connect();
 
         startSignIn();
@@ -95,7 +86,7 @@ public class ChatFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat, container, false);
+        return inflater.inflate(R.layout.fragment_questions, container, false);
     }
 
     @Override
@@ -108,63 +99,22 @@ public class ChatFragment extends Fragment {
         mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
         mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        mSocket.off("new message", onNewMessage);
+        mSocket.off("new message", onNewQuestion);
         mSocket.off("user joined", onUserJoined);
         mSocket.off("user left", onUserLeft);
-        mSocket.off("typing", onTyping);
-        mSocket.off("stop typing", onStopTyping);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        mMessagesView = (RecyclerView) view.findViewById(R.id.messages);
-        mMessagesView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        mMessagesView.setAdapter(mAdapter);
+        mQuestions = new ArrayList<>();
 
-        mInputMessageView = (EditText) view.findViewById(R.id.message_input);
-        mInputMessageView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView v, int id, KeyEvent event) {
-                if (id == R.id.send || id == EditorInfo.IME_NULL) {
-                    attemptSend();
-                    return true;
-                }
-                return false;
-            }
-        });
-        mInputMessageView.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+        mQuestionsView = (RecyclerView) view.findViewById(R.id.questions);
+        mQuestionsView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        mQuestionsView.setAdapter(mAdapter);
+        mAdapter.setQuestions(mQuestions);
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (null == mUsername) return;
-                if (!mSocket.connected()) return;
-
-                if (!mTyping) {
-                    mTyping = true;
-                    mSocket.emit("typing");
-                }
-
-                mTypingHandler.removeCallbacks(onTypingTimeout);
-                mTypingHandler.postDelayed(onTypingTimeout, TYPING_TIMER_LENGTH);
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
-
-        ImageButton sendButton = (ImageButton) view.findViewById(R.id.send_button);
-        sendButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                attemptSend();
-            }
-        });
     }
 
     @Override
@@ -178,7 +128,18 @@ public class ChatFragment extends Fragment {
         mUsername = data.getStringExtra("username");
         int numUsers = data.getIntExtra("numUsers", 1);
 
-        addLog(getResources().getString(R.string.message_welcome));
+
+        addQuestion("Sami", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod");
+        addQuestion("Pyry", "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum");
+        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+
+
+        if (mAdapter.getItemCount() == 0) {
+            String welcome = (getResources().getString(R.string.message_welcome)); // Might want to show this message to new users
+        }
         addParticipantsLog(numUsers);
     }
 
@@ -205,77 +166,29 @@ public class ChatFragment extends Fragment {
         return super.onOptionsItemSelected(item);
     }
 
-    private void addLog(String message) {
-        mMessages.add(new Message.Builder(Message.TYPE_LOG)
-                .message(message).build());
-        mAdapter.notifyItemInserted(mMessages.size() - 1);
-        scrollToBottom();
-    }
 
     private void addParticipantsLog(int numUsers) {
-        mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
+        if (mToolbarUpdater != null)
+            mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
     }
 
-    private void addMessage(String username, String message) {
-        if (username.equals(mUsername)) {
-            mMessages.add(new Message.Builder(Message.TYPE_MESSAGE_OWN)
-                    .username(username).message(message).build());
-        } else {
-            mMessages.add(new Message.Builder(Message.TYPE_MESSAGE_FRIEND)
-                    .username(username).message(message).build());
-        }
-        mAdapter.notifyItemInserted(mMessages.size() - 1);
-        scrollToBottom();
-    }
+    private void addQuestion(String username, String message) {
+//        if (username.equals(mUsername)) {
 
-    private void addTyping(String username) {
-        mMessages.add(new Message.Builder(Message.TYPE_ACTION)
-                .username(username).build());
-        mAdapter.notifyItemInserted(mMessages.size() - 1);
-        scrollToBottom();
-    }
+            Question question = new Question.Builder(Question.TYPE_MESSAGE_QUESTION)
+                    .message(message)
+                    .username(mUsername)
+                    .courseId("Koodikerho-id")
+                    .created(System.currentTimeMillis())
+                    .solved(false)
+                    .upvotes(0)
+                    .build();
 
-    private void removeTyping(String username) {
-        for (int i = mMessages.size() - 1; i >= 0; i--) {
-            Message message = mMessages.get(i);
-            if (message.getType() == Message.TYPE_ACTION && message.getUsername().equals(username)) {
-                mMessages.remove(i);
-                mAdapter.notifyItemRemoved(i);
-            }
-        }
-    }
-
-    private void attemptSend() {
-        if (null == mUsername) return;
-        if (!mSocket.connected()) return;
-
-        mTyping = false;
-
-        String message = mInputMessageView.getText().toString().trim();
-        if (TextUtils.isEmpty(message)) {
-            mInputMessageView.requestFocus();
-            return;
-        }
-
-        mInputMessageView.setText("");
-//        addMessage(mUsername, message);
-
-        // perform the sending message attempt.
-
-        JSONObject obj = new JSONObject();
-        try {
-            obj.put("message", message.trim());
-            mSocket.emit("new message", obj);
-
-        } catch (JSONException e) {
-            Log.e(TAG, "attemptSend: ", e);
-        }
-    }
-
-    private void startSignIn() {
-        mUsername = null;
-        Intent intent = new Intent(getActivity(), LoginActivity.class);
-        startActivityForResult(intent, REQUEST_LOGIN);
+            mQuestions.add(question);
+            mAdapter.notifyItemInserted(mQuestions.size() - 1);
+//            scrollToBottom();
+//        }
+//        Log.w(TAG, "addQuestion: Question not added");
     }
 
     private void leave() {
@@ -285,8 +198,14 @@ public class ChatFragment extends Fragment {
         startSignIn();
     }
 
+    private void startSignIn() {
+        mUsername = null;
+        Intent intent = new Intent(getActivity(), LoginActivity.class);
+        startActivityForResult(intent, REQUEST_LOGIN);
+    }
+
     private void scrollToBottom() {
-        mMessagesView.scrollToPosition(mAdapter.getItemCount() - 1);
+        mQuestionsView.scrollToPosition(mAdapter.getItemCount() - 1);
     }
 
     private Emitter.Listener onConnect = new Emitter.Listener() {
@@ -345,7 +264,7 @@ public class ChatFragment extends Fragment {
         }
     };
 
-    private Emitter.Listener onNewMessage = new Emitter.Listener() {
+    private Emitter.Listener onNewQuestion = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
             getActivity().runOnUiThread(new Runnable() {
@@ -360,10 +279,9 @@ public class ChatFragment extends Fragment {
                     } catch (JSONException e) {
                         return;
                     }
-                    Log.d(TAG, "run: " + data.toString());
 
-                    removeTyping(username);
-                    addMessage(username, message);
+
+                    addQuestion(username, message);
                 }
             });
         }
@@ -385,7 +303,6 @@ public class ChatFragment extends Fragment {
                         return;
                     }
 
-                    addLog(getResources().getString(R.string.message_user_joined, username));
                     addParticipantsLog(numUsers);
                 }
             });
@@ -408,68 +325,24 @@ public class ChatFragment extends Fragment {
                         return;
                     }
 
-                    addLog(getResources().getString(R.string.message_user_left, username));
                     addParticipantsLog(numUsers);
-                    removeTyping(username);
                 }
             });
         }
     };
 
-    private Emitter.Listener onTyping = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    try {
-                        username = data.getString("username");
-                    } catch (JSONException e) {
-                        return;
-                    }
-                    addTyping(username);
-                }
-            });
-        }
-    };
+    @Override
+    public void onUpvoteClick(int itemPosition) {
 
-    private Emitter.Listener onStopTyping = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    try {
-                        username = data.getString("username");
-                    } catch (JSONException e) {
-                        return;
-                    }
-                    removeTyping(username);
-                }
-            });
-        }
-    };
+    }
 
-    private Runnable onTypingTimeout = new Runnable() {
-        @Override
-        public void run() {
-            if (!mTyping) return;
+    @Override
+    public void onDownvoteClick(int itemPosition) {
 
-            mTyping = false;
+    }
 
-            JSONObject obj = new JSONObject();
-            try {
+    @Override
+    public void onQuestionClick(int itemPosition) {
 
-                obj.put("username", mUsername);
-                mSocket.emit("stop typing", obj);
-
-            } catch (JSONException e) {
-                Log.e(TAG, "attemptSend: ", e);
-            }
-        }
-    };
+    }
 }

@@ -37,12 +37,23 @@
                 <!--tools:layout="@layout/fragment_holter_log" />-->
 
                 <fragment
-                    class="com.niemisami.wedu.chat.ChatFragment"
+                    class="com.niemisami.wedu.question.QuestionsFragment"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                    android:layout_height="match_parent"
+                    tools:layout="@layout/fragment_questions" />
             </android.support.v4.widget.SlidingPaneLayout>
         </FrameLayout>
     </LinearLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/add_question_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right|bottom"
+        android:layout_marginBottom="@dimen/md_keylines"
+        android:layout_marginRight="@dimen/md_keylines"
+        android:src="@drawable/ic_add" />
+
 
     <!--<com.github.clans.fab.FloatingActionMenu-->
         <!--android:id="@+id/fab_menu"-->

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="http://schemas.android.com/apk/res-auto">
 
     <string name="app_name">Wedu</string>
     <string name="action_leave">Leave</string>
@@ -19,5 +19,24 @@
     <string name="message_user_joined">%s joined</string>
     <string name="message_user_left">%s left</string>
     <string name="user_action_typing">is typing</string>
+
+
+    <!-- For labelling today's forecast -->
+    <string name="today">Today</string>
+
+    <!-- For labelling tomorrow's forecast -->
+    <string name="tomorrow">Tomorrow</string>
+
+    <!-- Date format -->
+    <string name="format_full_friendly_date">
+        <xliff:g id="month">%1$s</xliff:g>, <xliff:g id="day">%2$s</xliff:g>
+    </string>
+
+    <string name="lorem_long">Bacon ipsum dolor amet this placeholder text is gonna be HUGE. You’re disgusting. I know words. I have the best words.
+        That other text? Sadly, it’s no longer a 10. Be careful, or I will spill the beans on your placeholder text. Lorem Ipsum is the single
+        greatest threat. We are not - we are not keeping up with other websites. I think my strongest asset maybe by far is my temperament.
+        I have a placeholding temperament. Lorem Ipsum is unattractive, both inside and out. I fully understand why it’s former users left it for something else. They made a good decision.</string>
+    <string name="lorem">Bacon ipsum dolor amet You’re disgusting.</string>
+
 
 </resources>
