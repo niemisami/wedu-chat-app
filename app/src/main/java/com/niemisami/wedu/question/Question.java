@@ -55,10 +55,11 @@ public class Question extends Message {
         return new Builder(getType());
     }
 
-    protected Builder decorate(Builder builder) {
+    @Override
+    protected Message.Builder decorate(Message.Builder builder) {
         super.decorate(builder);
-        return builder
-                .created(getCreated())
+        Builder b = (Builder) builder;
+        return b.created(getCreated())
                 .lecture(getLecture())
                 .courseId(getCourseId())
                 .upvotes(getUpvotes());

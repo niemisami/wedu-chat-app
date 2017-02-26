@@ -1,7 +1,6 @@
 package com.niemisami.wedu.question;
 
 
-import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -9,17 +8,22 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.nkzawa.emitter.Emitter;
@@ -37,23 +41,26 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
+import static android.R.attr.type;
 import static android.content.ContentValues.TAG;
-import static android.os.Build.VERSION_CODES.M;
-import static com.niemisami.wedu.R.id.linearLayout;
+import static com.niemisami.wedu.R.id.username;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler, MainActivity.OnFabClickListener{
+public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler, MainActivity.OnFabClickListener {
 
     private static final int REQUEST_LOGIN = 0;
 
     private ToolbarUpdater mToolbarUpdater;
     private FabUpdater mFabUpdater;
     private RecyclerView mQuestionsView;
-    private RelativeLayout mQuestionInputField;
+    private RelativeLayout mQuestionInputContainer;
+    private EditText mQuestionInputField;
     private ImageButton mSendQuestionButton;
+    private TextView mWelcomeText;
     private List<Question> mQuestions;
     private QuestionsAdapter mAdapter;
     private String mUsername;
@@ -70,7 +77,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         super.onAttach(context);
         if (context instanceof ToolbarUpdater)
             mToolbarUpdater = (ToolbarUpdater) context;
-        if(context instanceof FabUpdater) {
+        if (context instanceof FabUpdater) {
             mFabUpdater = (FabUpdater) context;
         }
         mAdapter = new QuestionsAdapter(context, this);
@@ -100,7 +107,10 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_questions, container, false);
+        View view = inflater.inflate(R.layout.fragment_questions, container, false);
+
+        mWelcomeText = (TextView) view.findViewById(R.id.welcome_text);
+        return view;
     }
 
     @Override
@@ -132,22 +142,39 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mQuestionsView.setOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                if(dy > 0) {
+                if (dy > 0) {
                     mFabUpdater.hideFab();
-                } else if(dy < 0) {
+                } else if (dy < 0) {
                     mFabUpdater.showFab();
                 }
             }
         });
 
-        mQuestionInputField = (RelativeLayout   ) view.findViewById(R.id.message_input_layout);
-//        mQuestionInputField.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
+        mQuestionInputContainer = (RelativeLayout) view.findViewById(R.id.message_input_layout);
+//        mQuestionInputContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         mSendQuestionButton = (ImageButton) view.findViewById(R.id.send_button);
         mSendQuestionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mQuestionInputField.setVisibility(View.GONE);
+                attemptSend();
+                //TODO better place for these
+                mQuestionInputContainer.setVisibility(View.GONE);
                 mFabUpdater.showFab();
+            }
+        });
+
+        mQuestionInputField = (EditText) view.findViewById(R.id.message_input);
+        mQuestionInputField.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int id, KeyEvent event) {
+                if (id == R.id.send || id == EditorInfo.IME_NULL) {
+                    attemptSend();
+                    //TODO better place for these
+                    mQuestionInputContainer.setVisibility(View.GONE);
+                    mFabUpdater.showFab();
+                    return true;
+                }
+                return false;
             }
         });
 
@@ -166,17 +193,13 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         int numUsers = data.getIntExtra("numUsers", 1);
 
 
-        addQuestion("Sami", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod");
-        addQuestion("Pyry", "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum");
-        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
-        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
-        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
-        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+//        addQuestion("Sami", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod");
+//        addQuestion("Pyry", "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum");
+//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
+//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
 
-
-        if (mAdapter.getItemCount() == 0) {
-            String welcome = (getResources().getString(R.string.message_welcome)); // Might want to show this message to new users
-        }
         addParticipantsLog(numUsers);
     }
 
@@ -205,27 +228,23 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
 
     private void addParticipantsLog(int numUsers) {
+
+        // TODO: come up with better place to check welcome text. It is hidden when new question is added in attemptSend()
+        if (mAdapter.getItemCount() == 0) {
+            mWelcomeText.setVisibility(View.VISIBLE);
+        }
+
         if (mToolbarUpdater != null)
             mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
     }
 
-    private void addQuestion(String username, String message) {
-//        if (username.equals(mUsername)) {
+    private void addQuestion(Question question) {
+        if(mWelcomeText.getVisibility() == View.VISIBLE){
+            mWelcomeText.setVisibility(View.GONE);
+        }
 
-            Question question = new Question.Builder(Question.TYPE_MESSAGE_QUESTION)
-                    .message(message)
-                    .username(mUsername)
-                    .courseId("Koodikerho-id")
-                    .created(System.currentTimeMillis())
-                    .solved(false)
-                    .upvotes(0)
-                    .build();
-
-            mQuestions.add(question);
-            mAdapter.notifyItemInserted(mQuestions.size() - 1);
-//            scrollToBottom();
-//        }
-//        Log.w(TAG, "addQuestion: Question not added");
+        mQuestions.add(question);
+        mAdapter.notifyItemInserted(mQuestions.size() - 1);
     }
 
     private void leave() {
@@ -244,6 +263,33 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     private void scrollToBottom() {
         mQuestionsView.scrollToPosition(mAdapter.getItemCount() - 1);
     }
+
+
+    private void attemptSend() {
+        if (null == mUsername) return;
+        if (!mSocket.connected()) return;
+
+        String message = mQuestionInputField.getText().toString().trim();
+        if (TextUtils.isEmpty(message)) {
+            mQuestionInputField.requestFocus();
+            return;
+        }
+
+        mQuestionInputField.setText("");
+//        addMessage(mUsername, message);
+
+        // perform the sending message attempt.
+
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("message", message.trim());
+            mSocket.emit("new message", obj);
+
+        } catch (JSONException e) {
+            Log.e(TAG, "attemptSend: ", e);
+        }
+    }
+
 
     private Emitter.Listener onConnect = new Emitter.Listener() {
         @Override
@@ -308,17 +354,37 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 @Override
                 public void run() {
                     JSONObject data = (JSONObject) args[0];
+                    int type;
                     String username;
                     String message;
+                    String courseId;
+                    long created;
+                    int upvotes;
+                    boolean isSolved;
                     try {
+
+                        type = Question.TYPE_MESSAGE_QUESTION;
                         username = data.getString("username");
                         message = data.getString("message");
+                        created = System.currentTimeMillis();
+                        courseId = "Koodikerho";
+                        upvotes = new Random().nextInt(10);
+                        isSolved = upvotes % 2 == 0;
+
                     } catch (JSONException e) {
                         return;
                     }
 
+                    Question question = new Question.Builder(type)
+                            .message(message)
+                            .username(username)
+                            .courseId(courseId)
+                            .solved(isSolved)
+                            .created(created)
+                            .upvotes(upvotes)
+                            .build();
 
-                    addQuestion(username, message);
+                    addQuestion(question);
                 }
             });
         }
@@ -370,7 +436,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     @Override
     public void onUpvoteClick(int itemPosition) {
-        if(itemPosition >= 0) {
+        if (itemPosition >= 0) {
             Question votedQuestion = mQuestions.get(itemPosition);
             int currentUpvotes = votedQuestion.getUpvotes();
             final Question upvotedQuestion = votedQuestion.toBuilder().upvotes(++currentUpvotes).build();
@@ -385,7 +451,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     @Override
     public void onDownvoteClick(int itemPosition) {
-        if(itemPosition >= 0) {
+        if (itemPosition >= 0) {
             Question votedQuestion = mQuestions.get(itemPosition);
             int currentUpvotes = votedQuestion.getUpvotes();
             final Question downvotedQuestion = votedQuestion.toBuilder().upvotes(--currentUpvotes).build();
@@ -409,6 +475,37 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     }
 
     private void displaQuestionInputField() {
-        mQuestionInputField.setVisibility(View.VISIBLE);
+        mQuestionInputContainer.setVisibility(View.VISIBLE);
+        mQuestionInputField.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean hasFocus) {
+                if (hasFocus) {
+                    showKeyboard(getActivity());
+                } else {
+                    hideKeyboard(getActivity());
+                }
+            }
+        });
+        mQuestionInputField.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                mQuestionInputField.requestFocus();
+            }
+        }, 1000);
+        mQuestionInputField.requestFocus();
+    }
+
+    public static void showKeyboard(Activity activity) {
+        if (activity != null) {
+            activity.getWindow()
+                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        }
+    }
+
+    public static void hideKeyboard(Activity activity) {
+        if (activity != null) {
+            activity.getWindow()
+                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+        }
     }
 }

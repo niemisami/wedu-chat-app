@@ -31,7 +31,7 @@
         android:imeActionId="@+id/send"
         android:imeActionLabel="@string/action_send"
         android:imeOptions="actionSend"
-        android:inputType="text" />
+        android:inputType="textMultiLine" />
 
 
 </RelativeLayout>

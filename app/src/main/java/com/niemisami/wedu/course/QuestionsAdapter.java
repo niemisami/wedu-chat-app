@@ -119,7 +119,7 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
             if (null == mQuestionView) return;
             mQuestionView.setText(message);
             View parent = (View) mCreatedView.getParent();
-            parent.setBackgroundColor(getQuestionBackgroundColor(message.substring(0,7)));
+            parent.setBackgroundColor(getQuestionBackgroundColor(message.substring(0,message.length())));
         }
 
         public void setUpvotes(int upvotes) {

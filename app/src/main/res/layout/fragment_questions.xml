@@ -17,6 +17,16 @@
         android:layout_height="match_parent"
         android:layout_above="@+id/message_input_layout">
 
+        <TextView
+            android:id="@+id/welcome_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:layout_marginTop="@dimen/margin_large"
+            android:text="@string/message_welcome"
+            android:visibility="visible"/>
+
         <android.support.v7.widget.RecyclerView
             android:id="@+id/questions"
             android:layout_width="match_parent"
