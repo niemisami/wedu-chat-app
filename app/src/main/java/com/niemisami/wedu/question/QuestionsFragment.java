@@ -9,6 +9,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -31,6 +32,7 @@ import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.MainActivity;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
+import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.utils.FabUpdater;
@@ -40,11 +42,14 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import static android.R.attr.id;
 import static android.R.attr.type;
 import static android.content.ContentValues.TAG;
+import static android.os.Build.VERSION_CODES.M;
 import static com.niemisami.wedu.R.id.username;
 
 /**
@@ -239,7 +244,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     }
 
     private void addQuestion(Question question) {
-        if(mWelcomeText.getVisibility() == View.VISIBLE){
+        if (mWelcomeText.getVisibility() == View.VISIBLE) {
             mWelcomeText.setVisibility(View.GONE);
         }
 
@@ -283,6 +288,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         JSONObject obj = new JSONObject();
         try {
             obj.put("message", message.trim());
+            obj.put("type", Message.TYPE_MESSAGE_QUESTION);
+            obj.put("course", Question.DEFAULT_COURSE);
             mSocket.emit("new message", obj);
 
         } catch (JSONException e) {
@@ -358,24 +365,34 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                     String username;
                     String message;
                     String courseId;
+                    String id;
                     long created;
                     int upvotes;
                     boolean isSolved;
                     try {
 
-                        type = Question.TYPE_MESSAGE_QUESTION;
-                        username = data.getString("username");
-                        message = data.getString("message");
-                        created = System.currentTimeMillis();
-                        courseId = "Koodikerho";
-                        upvotes = new Random().nextInt(10);
-                        isSolved = upvotes % 2 == 0;
+                        if (data.getInt("type") == Question.TYPE_MESSAGE_QUESTION) {
+
+                            Log.d(TAG, "run: " + data.toString());
+                            type = Question.TYPE_MESSAGE_QUESTION;
+                            username = data.getString("username");
+                            message = data.getString("message");
+                            id = data.getString("_id");
+                            created = data.getLong("created");
+                            courseId = data.getString("course");
+                            upvotes = data.getInt("upvotes");
+                            isSolved = data.getBoolean("solved");
+
+                        } else {
+                            return;
+                        }
 
                     } catch (JSONException e) {
+                        Log.e(TAG, "onNewMessage: ", e );
                         return;
                     }
 
-                    Question question = new Question.Builder(type)
+                    Question question = new Question.Builder(id, type)
                             .message(message)
                             .username(username)
                             .courseId(courseId)

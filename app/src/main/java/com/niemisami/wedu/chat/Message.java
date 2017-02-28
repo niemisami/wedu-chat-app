@@ -1,5 +1,6 @@
 package com.niemisami.wedu.chat;
 
+import static android.R.attr.type;
 import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
 
 /**
@@ -8,19 +9,21 @@ import static android.icu.lang.UCharacter.GraphemeClusterBreak.T;
 
 public class Message {
 
-    public static final int TYPE_MESSAGE_QUESTION = 0;
-    public static final int TYPE_MESSAGE_OWN = 1;
-    public static final int TYPE_MESSAGE_FRIEND = 2;
+    public static final int TYPE_MESSAGE_QUESTION = 1;
+    public static final int TYPE_MESSAGE_OWN = 2;
+    public static final int TYPE_MESSAGE_FRIEND = 3;
 
     public static final int TYPE_LOG = 100;
     public static final int TYPE_ACTION = 101;
 
     private int mType;
+    private String mId;
     private String mMessage;
     private String mUsername;
 
     protected Message(Builder builder) {
         mType = builder.mType;
+        mId = builder.mId;
         mMessage = builder.mMessage;
         mUsername = builder.mUsername;
     }
@@ -37,6 +40,9 @@ public class Message {
         return mUsername;
     }
 
+    public String getId() {
+        return mId;
+    }
 
     public Builder toBuilder() {
         return decorate(newBuilder());
@@ -49,20 +55,19 @@ public class Message {
     }
 
     protected Builder newBuilder() {
-        return new Builder(getType());
+        return new Builder(getId(), getType());
     }
 
 
-
-
-
     public static class Builder {
-        protected final int mType;
-        protected String mUsername;
-        protected String mMessage;
+        private final int mType;
+        private String mId;
+        private String mUsername;
+        private String mMessage;
 
 
-        public Builder(int type) {
+        public Builder(String id, int type) {
+            mId = id;
             mType = type;
         }
 

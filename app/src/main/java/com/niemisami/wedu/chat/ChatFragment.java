@@ -206,7 +206,7 @@ public class ChatFragment extends Fragment {
     }
 
     private void addLog(String message) {
-        mMessages.add(new Message.Builder(Message.TYPE_LOG)
+        mMessages.add(new Message.Builder("none", Message.TYPE_LOG)
                 .message(message).build());
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         scrollToBottom();
@@ -218,10 +218,10 @@ public class ChatFragment extends Fragment {
 
     private void addMessage(String username, String message) {
         if (username.equals(mUsername)) {
-            mMessages.add(new Message.Builder(Message.TYPE_MESSAGE_OWN)
+            mMessages.add(new Message.Builder("none", Message.TYPE_MESSAGE_OWN)
                     .username(username).message(message).build());
         } else {
-            mMessages.add(new Message.Builder(Message.TYPE_MESSAGE_FRIEND)
+            mMessages.add(new Message.Builder("none",Message.TYPE_MESSAGE_FRIEND)
                     .username(username).message(message).build());
         }
         mAdapter.notifyItemInserted(mMessages.size() - 1);
@@ -229,7 +229,7 @@ public class ChatFragment extends Fragment {
     }
 
     private void addTyping(String username) {
-        mMessages.add(new Message.Builder(Message.TYPE_ACTION)
+        mMessages.add(new Message.Builder("none", Message.TYPE_ACTION)
                 .username(username).build());
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         scrollToBottom();

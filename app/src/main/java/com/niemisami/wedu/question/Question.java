@@ -2,11 +2,15 @@ package com.niemisami.wedu.question;
 
 import com.niemisami.wedu.chat.Message;
 
+import static android.R.attr.type;
+
 /**
  * Created by Sami on 23.2.2017.
  */
 
 public class Question extends Message {
+
+    public static final String DEFAULT_COURSE = "Koodikerho";
 
     private String mCourseId = "koodikerho-id";
     private String mLecture = "Koodikerho";
@@ -52,7 +56,7 @@ public class Question extends Message {
 
     @Override
     protected Builder newBuilder() {
-        return new Builder(getType());
+        return new Builder(getId(), getType());
     }
 
     @Override
@@ -72,8 +76,8 @@ public class Question extends Message {
         private int mUpvotes;
         private boolean mIsSolved;
 
-        public Builder(int type) {
-            super(type);
+        public Builder(String id, int type) {
+            super(id, type);
         }
 
         public Builder courseId(String course) {
