@@ -9,7 +9,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
-import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -20,7 +19,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -38,19 +36,14 @@ import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.utils.FabUpdater;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Random;
 
-import static android.R.attr.id;
-import static android.R.attr.type;
 import static android.content.ContentValues.TAG;
-import static android.os.Build.VERSION_CODES.M;
-import static com.niemisami.wedu.R.id.username;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -104,6 +97,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mSocket.on("new message", onNewQuestion);
         mSocket.on("user joined", onUserJoined);
         mSocket.on("user left", onUserLeft);
+        mSocket.on("voted", onVoted);
         mSocket.connect();
 
         startSignIn();
@@ -131,6 +125,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mSocket.off("new message", onNewQuestion);
         mSocket.off("user joined", onUserJoined);
         mSocket.off("user left", onUserLeft);
+        mSocket.off("voted", onVoted);
     }
 
     @Override
@@ -380,7 +375,12 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                             id = data.getString("_id");
                             created = data.getLong("created");
                             courseId = data.getString("course");
-                            upvotes = data.getInt("upvotes");
+
+                            JSONArray upvotedUsers = data.getJSONObject("grade").getJSONArray("upvotes");
+                            JSONArray downvotedUsers = data.getJSONObject("grade").getJSONArray("downvotes");
+
+                            upvotes = upvotedUsers.length() - downvotedUsers.length();
+
                             isSolved = data.getBoolean("solved");
 
                         } else {
@@ -388,7 +388,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                         }
 
                     } catch (JSONException e) {
-                        Log.e(TAG, "onNewMessage: ", e );
+                        Log.e(TAG, "onNewMessage: ", e);
                         return;
                     }
 
@@ -451,17 +451,71 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         }
     };
 
+    private Emitter.Listener onVoted = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    JSONObject data = (JSONObject) args[0];
+                    String messageId;
+                    int upvotes;
+                    try {
+                        messageId = data.getString("messageId");
+
+                        JSONArray upvotedUsers = data.getJSONObject("grade").getJSONArray("upvotes");
+                        JSONArray downvotedUsers = data.getJSONObject("grade").getJSONArray("downvotes");
+
+                        upvotes = upvotedUsers.length() - downvotedUsers.length();
+
+                    } catch (JSONException e) {
+                        return;
+                    }
+
+                    int gradedQuestionPosition = findQuestionPositionWithId(messageId);
+
+                    Question gradedQuestion = mQuestions.get(gradedQuestionPosition);
+
+                    final Question downvotedQuestion = gradedQuestion.toBuilder().upvotes(upvotes).build();
+                    mQuestions.remove(gradedQuestionPosition);
+                    mQuestions.add(gradedQuestionPosition, downvotedQuestion);
+                    mAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+    };
+
+
+    /**
+     * Find message with given ID and return the position in Questions array
+     * */
+    private int findQuestionPositionWithId(String messageId) {
+        if (mQuestions.size() >= 0) {
+            for (int i = 0; i < mQuestions.size(); i++) {
+                if (mQuestions.get(i).getId().equals(messageId)) {
+                    return i;
+                }
+            }
+        }
+    }
+
     @Override
     public void onUpvoteClick(int itemPosition) {
         if (itemPosition >= 0) {
+
             Question votedQuestion = mQuestions.get(itemPosition);
-            int currentUpvotes = votedQuestion.getUpvotes();
-            final Question upvotedQuestion = votedQuestion.toBuilder().upvotes(++currentUpvotes).build();
-            mQuestions.remove(itemPosition);
-            mQuestions.add(itemPosition, upvotedQuestion);
-            mAdapter.notifyDataSetChanged();
+
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("messageId", votedQuestion.getId());
+                mSocket.emit("upvote", obj);
+
+            } catch (JSONException e) {
+                Log.e(TAG, "onUpvoteClick: ", e);
+            }
+
         } else {
-            Log.w(TAG, "onDownvoteClick: tried to upvote negative index");
+            Log.w(TAG, "onUpvoteClick: tried to upvote negative index");
         }
 
     }
@@ -469,12 +523,18 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     @Override
     public void onDownvoteClick(int itemPosition) {
         if (itemPosition >= 0) {
+
             Question votedQuestion = mQuestions.get(itemPosition);
-            int currentUpvotes = votedQuestion.getUpvotes();
-            final Question downvotedQuestion = votedQuestion.toBuilder().upvotes(--currentUpvotes).build();
-            mQuestions.remove(itemPosition);
-            mQuestions.add(itemPosition, downvotedQuestion);
-            mAdapter.notifyDataSetChanged();
+
+            JSONObject obj = new JSONObject();
+            try {
+                obj.put("messageId", votedQuestion.getId());
+                mSocket.emit("downvote", obj);
+
+            } catch (JSONException e) {
+                Log.e(TAG, "onDownvoteClick: ", e);
+            }
+
         } else {
             Log.w(TAG, "onDownvoteClick: tried to downvote negative index");
         }
@@ -483,7 +543,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     @Override
     public void onQuestionClick(int itemPosition) {
-
+        // TODO start detailed Question view. Not yet created
     }
 
     @Override
