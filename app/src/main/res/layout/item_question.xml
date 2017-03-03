@@ -5,10 +5,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/spacing"
+    android:layout_marginBottom="0dp"
     android:layout_marginEnd="@dimen/spacing"
+    android:layout_marginStart="@dimen/spacing"
     android:layout_marginTop="@dimen/spacing"
-    android:layout_marginBottom="0dp">
+    android:clickable="true"
+    android:foreground="?android:attr/selectableItemBackground">
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/question_container"
@@ -65,8 +67,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_marginBottom="16dp"
-            android:layout_marginStart="16dp"
             android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:gravity="center"
             android:orientation="vertical"
@@ -74,12 +76,12 @@
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <Button
+            <ImageButton
                 android:id="@+id/button_upvote_question"
-                style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="@dimen/fab_size_mini"
                 android:layout_height="@dimen/fab_size_mini"
-                android:background="@drawable/ic_add" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_add" />
 
             <TextView
                 android:id="@+id/label_upvotes"
@@ -92,12 +94,12 @@
                 android:textSize="@dimen/message_text"
                 tools:text="5" />
 
-            <Button
+            <ImageButton
                 android:id="@+id/button_downvote_question"
-                style="@style/Widget.AppCompat.Button.Borderless"
                 android:layout_width="@dimen/fab_size_mini"
                 android:layout_height="@dimen/fab_size_mini"
-                android:background="@drawable/ic_substract" />
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_substract" />
 
         </LinearLayout>
 

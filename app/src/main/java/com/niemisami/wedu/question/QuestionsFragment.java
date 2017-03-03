@@ -4,6 +4,7 @@ package com.niemisami.wedu.question;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
@@ -19,6 +20,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
@@ -44,6 +46,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
+import static android.content.Context.INPUT_METHOD_SERVICE;
+import static com.niemisami.wedu.R.id.linearLayout;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -175,6 +179,16 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                     return true;
                 }
                 return false;
+            }
+        });
+        mQuestionInputField.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean hasFocus) {
+                if (hasFocus) {
+                    showKeyboard(getActivity(), mQuestionInputField);
+                } else {
+                    hideKeyboard(getActivity(), mQuestionInputField);
+                }
             }
         });
 
@@ -376,10 +390,10 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                             created = data.getLong("created");
                             courseId = data.getString("course");
 
-                            JSONArray upvotedUsers = data.getJSONObject("grade").getJSONArray("upvotes");
-                            JSONArray downvotedUsers = data.getJSONObject("grade").getJSONArray("downvotes");
-
-                            upvotes = upvotedUsers.length() - downvotedUsers.length();
+//                            JSONArray upvotedUsers = data.getJSONObject("grade").getJSONArray("upvotes");
+//                            JSONArray downvotedUsers = data.getJSONObject("grade").getJSONArray("downvotes");
+//
+//                            upvotes = upvotedUsers.length() - downvotedUsers.length();
 
                             isSolved = data.getBoolean("solved");
 
@@ -398,7 +412,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                             .courseId(courseId)
                             .solved(isSolved)
                             .created(created)
-                            .upvotes(upvotes)
+//                            .upvotes(upvotes)
                             .build();
 
                     addQuestion(question);
@@ -458,7 +472,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 @Override
                 public void run() {
                     JSONObject data = (JSONObject) args[0];
-                    String messageId;
+                    String messageId = "";
+                    int gradedQuestionPosition = -1;
                     int upvotes;
                     try {
                         messageId = data.getString("messageId");
@@ -468,11 +483,16 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
                         upvotes = upvotedUsers.length() - downvotedUsers.length();
 
+                        gradedQuestionPosition = findQuestionPositionWithId(messageId);
+
                     } catch (JSONException e) {
+                        Log.e(TAG, "onVoted. Couldn't parse message json with id: " + messageId);
+                        return;
+                    } catch (Resources.NotFoundException e) {
+                        Log.e(TAG, "onVoted. Didn't find question with id: " + messageId);
                         return;
                     }
 
-                    int gradedQuestionPosition = findQuestionPositionWithId(messageId);
 
                     Question gradedQuestion = mQuestions.get(gradedQuestionPosition);
 
@@ -488,8 +508,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     /**
      * Find message with given ID and return the position in Questions array
-     * */
-    private int findQuestionPositionWithId(String messageId) {
+     */
+    private int findQuestionPositionWithId(String messageId) throws Resources.NotFoundException {
         if (mQuestions.size() >= 0) {
             for (int i = 0; i < mQuestions.size(); i++) {
                 if (mQuestions.get(i).getId().equals(messageId)) {
@@ -497,6 +517,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 }
             }
         }
+        throw new Resources.NotFoundException();
+
     }
 
     @Override
@@ -553,36 +575,32 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     private void displaQuestionInputField() {
         mQuestionInputContainer.setVisibility(View.VISIBLE);
-        mQuestionInputField.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View view, boolean hasFocus) {
-                if (hasFocus) {
-                    showKeyboard(getActivity());
-                } else {
-                    hideKeyboard(getActivity());
-                }
-            }
-        });
-        mQuestionInputField.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                mQuestionInputField.requestFocus();
-            }
-        }, 1000);
         mQuestionInputField.requestFocus();
     }
 
-    public static void showKeyboard(Activity activity) {
-        if (activity != null) {
-            activity.getWindow()
-                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+    public static void showKeyboard(Activity activity, View requestingImeView) {
+        if (activity != null && requestingImeView != null) {
+            InputMethodManager inputMethodManager =
+                    (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            inputMethodManager.toggleSoftInputFromWindow(
+                    requestingImeView.getApplicationWindowToken(),
+                    InputMethodManager.SHOW_FORCED, 0);
+
+//            activity.getWindow()
+//                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
 
-    public static void hideKeyboard(Activity activity) {
-        if (activity != null) {
-            activity.getWindow()
-                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+    public static void hideKeyboard(Activity activity, View requestingImeView) {
+
+        if (activity != null && requestingImeView != null)  {
+//            activity.getWindow()
+//                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+
+            InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(INPUT_METHOD_SERVICE);
+            inputMethodManager.hideSoftInputFromWindow(requestingImeView.getWindowToken(), 0);
         }
+
+
     }
 }

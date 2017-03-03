@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -85,7 +86,7 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
     public class QuestionAdapterViewHolder extends RecyclerView.ViewHolder {
         private TextView mCreatedView, mQuestionView, mUpvotesView;
         private ImageView mSolvedIcon;
-        private Button mUpvoteButton, mDownvoteButton;
+        private ImageButton mUpvoteButton, mDownvoteButton;
 
         public QuestionAdapterViewHolder(View itemView) {
             super(itemView);
@@ -94,8 +95,8 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
             mQuestionView = (TextView) itemView.findViewById(R.id.question_message);
             mUpvotesView = (TextView) itemView.findViewById(R.id.label_upvotes);
             mSolvedIcon = (ImageView) itemView.findViewById(R.id.icon_solved);
-            mUpvoteButton = (Button) itemView.findViewById(R.id.button_upvote_question);
-            mDownvoteButton = (Button) itemView.findViewById(R.id.button_downvote_question);
+            mUpvoteButton = (ImageButton) itemView.findViewById(R.id.button_upvote_question);
+            mDownvoteButton = (ImageButton) itemView.findViewById(R.id.button_downvote_question);
 
             itemView.setOnClickListener(onQuestionClickListener);
             mUpvoteButton.setOnClickListener(onUpvoteClickListener);
