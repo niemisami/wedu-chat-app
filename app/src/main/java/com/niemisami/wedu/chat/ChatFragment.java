@@ -88,8 +88,6 @@ public class ChatFragment extends Fragment {
         mSocket.on("typing", onTyping);
         mSocket.on("stop typing", onStopTyping);
         mSocket.connect();
-
-        startSignIn();
     }
 
     @Override
@@ -221,7 +219,7 @@ public class ChatFragment extends Fragment {
             mMessages.add(new Message.Builder("none", Message.TYPE_MESSAGE_OWN)
                     .username(username).message(message).build());
         } else {
-            mMessages.add(new Message.Builder("none",Message.TYPE_MESSAGE_FRIEND)
+            mMessages.add(new Message.Builder("none", Message.TYPE_MESSAGE_FRIEND)
                     .username(username).message(message).build());
         }
         mAdapter.notifyItemInserted(mMessages.size() - 1);
@@ -310,13 +308,22 @@ public class ChatFragment extends Fragment {
                             getActivity().finish();
                         }
                     }
-                    Toast.makeText(getActivity().getApplicationContext(),
-                            R.string.connect, Toast.LENGTH_LONG).show();
+                    showToast(R.string.connect);
                     isConnected = true;
                 }
             });
         }
     };
+
+    private Toast mToast;
+
+    private void showToast(int stringResourceId) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+        mToast = Toast.makeText(getActivity().getApplicationContext(), stringResourceId, Toast.LENGTH_LONG);
+        mToast.show();
+    }
 
     private Emitter.Listener onDisconnect = new Emitter.Listener() {
         @Override
@@ -325,8 +332,8 @@ public class ChatFragment extends Fragment {
                 @Override
                 public void run() {
                     isConnected = false;
-                    Toast.makeText(getActivity().getApplicationContext(),
-                            R.string.disconnect, Toast.LENGTH_LONG).show();
+
+                    showToast(R.string.disconnect);
                 }
             });
         }
@@ -338,8 +345,7 @@ public class ChatFragment extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getActivity().getApplicationContext(),
-                            R.string.error_connect, Toast.LENGTH_LONG).show();
+                    showToast(R.string.error_connect);
                 }
             });
         }

@@ -32,6 +32,7 @@ import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.MainActivity;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
+import com.niemisami.wedu.chat.ChatActivity;
 import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
@@ -565,7 +566,9 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     @Override
     public void onQuestionClick(int itemPosition) {
-        // TODO start detailed Question view. Not yet created
+        Intent launchQuestionDetails = new Intent(getActivity(), ChatActivity.class);
+        launchQuestionDetails.putExtra(Question.EXTRA_QUESTION_ID, mQuestions.get(itemPosition).getId());
+        startActivity(launchQuestionDetails);
     }
 
     @Override

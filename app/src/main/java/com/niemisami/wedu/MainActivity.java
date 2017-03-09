@@ -3,25 +3,39 @@ package com.niemisami.wedu;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 
+import com.niemisami.wedu.chat.ChatFragment;
+import com.niemisami.wedu.chat.Message;
+import com.niemisami.wedu.question.Question;
+import com.niemisami.wedu.question.QuestionsFragment;
 import com.niemisami.wedu.utils.FabUpdater;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity implements ToolbarUpdater, FabUpdater {
+
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private Toolbar mToolbar;
     private OnFabClickListener mOnFabClickListener;
     private FloatingActionButton mFab;
     private FabUpdater mFabUpdater;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        inflateFragment();
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(mToolbar);
@@ -35,8 +49,15 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
                 mOnFabClickListener.onFabClicked();
             }
         });
-
     }
+
+    private void inflateFragment() {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, new QuestionsFragment());
+        fragmentTransaction.commit();
+    }
+
 
     @Override
     public void onAttachFragment(Fragment fragment) {

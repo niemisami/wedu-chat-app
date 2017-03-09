@@ -7,7 +7,7 @@
 
     <include
         android:id="@+id/message_input_layout"
-        layout="@layout/layout_comment_input" />
+        layout="@layout/layout_comment_input"/>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/messages"
@@ -15,7 +15,8 @@
         android:layout_height="match_parent"
         android:layout_above="@id/message_input_layout"
         android:scrollbarStyle="outsideOverlay"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        tools:listitem="@layout/item_message" />
 
 
 </RelativeLayout>

@@ -15,12 +15,14 @@ public class WeduApplication extends Application {
 
     private static final String TAG = WeduApplication.class.getSimpleName();
 
-    public static final String CHAT_SERVER_URL = "http://wedudev.herokuapp.com";
-
-
+    public static String CHAT_SERVER_URL;
     private Socket mSocket;
 
-    {
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        CHAT_SERVER_URL = getString(R.string.server_end_point_local);
+
         try {
             mSocket = IO.socket(CHAT_SERVER_URL);
         } catch (URISyntaxException e) {

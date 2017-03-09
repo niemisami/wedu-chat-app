@@ -10,6 +10,9 @@ import static android.R.attr.type;
 
 public class Question extends Message {
 
+
+    public static final String EXTRA_QUESTION_ID = "extra_question_id";
+
     public static final String DEFAULT_COURSE = "Koodikerho";
 
     private String mCourseId = "koodikerho-id";

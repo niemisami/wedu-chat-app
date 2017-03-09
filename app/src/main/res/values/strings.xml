@@ -5,6 +5,8 @@
     <string name="action_leave">Leave</string>
     <string name="action_send">Send</string>
     <string name="prompt_message">Message</string>
+    <string name="server_end_point_local">http://10.0.2.2:3000</string>
+    <string name="server_end_point">http://wedudev.herokuapp.com</string>
 
     <string name="connect">Connected</string>
     <string name="disconnect">Disconnected, Please check your internet connection</string>
