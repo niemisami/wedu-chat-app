@@ -37,6 +37,7 @@ import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.utils.FabUpdater;
+import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 
 import org.json.JSONArray;
@@ -46,6 +47,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.R.attr.type;
 import static android.content.ContentValues.TAG;
 import static android.content.Context.INPUT_METHOD_SERVICE;
 import static com.niemisami.wedu.R.id.linearLayout;
@@ -371,50 +373,13 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 @Override
                 public void run() {
                     JSONObject data = (JSONObject) args[0];
-                    int type;
-                    String username;
-                    String message;
-                    String courseId;
-                    String id;
-                    long created;
-                    int upvotes;
-                    boolean isSolved;
+
+                    Question question = null;
                     try {
-
-                        if (data.getInt("type") == Question.TYPE_MESSAGE_QUESTION) {
-
-                            Log.d(TAG, "run: " + data.toString());
-                            type = Question.TYPE_MESSAGE_QUESTION;
-                            username = data.getString("username");
-                            message = data.getString("message");
-                            id = data.getString("_id");
-                            created = data.getLong("created");
-                            courseId = data.getString("course");
-
-//                            JSONArray upvotedUsers = data.getJSONObject("grade").getJSONArray("upvotes");
-//                            JSONArray downvotedUsers = data.getJSONObject("grade").getJSONArray("downvotes");
-//
-//                            upvotes = upvotedUsers.length() - downvotedUsers.length();
-
-                            isSolved = data.getBoolean("solved");
-
-                        } else {
-                            return;
-                        }
-
-                    } catch (JSONException e) {
-                        Log.e(TAG, "onNewMessage: ", e);
-                        return;
+                        question = MessageJsonParser.parseQuestion(data);
+                    } catch (NullPointerException e) {
+                        Log.e(TAG, "run: ", e);
                     }
-
-                    Question question = new Question.Builder(id, type)
-                            .message(message)
-                            .username(username)
-                            .courseId(courseId)
-                            .solved(isSolved)
-                            .created(created)
-//                            .upvotes(upvotes)
-                            .build();
 
                     addQuestion(question);
                 }
@@ -584,7 +549,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     public static void showKeyboard(Activity activity, View requestingImeView) {
         if (activity != null && requestingImeView != null) {
             InputMethodManager inputMethodManager =
-                    (InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+                    (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
             inputMethodManager.toggleSoftInputFromWindow(
                     requestingImeView.getApplicationWindowToken(),
                     InputMethodManager.SHOW_FORCED, 0);
@@ -596,7 +561,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     public static void hideKeyboard(Activity activity, View requestingImeView) {
 
-        if (activity != null && requestingImeView != null)  {
+        if (activity != null && requestingImeView != null) {
 //            activity.getWindow()
 //                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
 

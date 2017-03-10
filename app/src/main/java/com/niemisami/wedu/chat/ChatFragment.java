@@ -30,17 +30,26 @@ import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
+import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.utils.ToolbarUpdater;
+import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 import static android.content.ContentValues.TAG;
 
-public class ChatFragment extends Fragment {
+public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     private static final int REQUEST_LOGIN = 0;
 
@@ -57,6 +66,9 @@ public class ChatFragment extends Fragment {
     private Socket mSocket;
 
     private Boolean isConnected = true;
+    private Question mQuestion;
+
+
 
     public ChatFragment() {
     }
@@ -88,6 +100,7 @@ public class ChatFragment extends Fragment {
         mSocket.on("typing", onTyping);
         mSocket.on("stop typing", onStopTyping);
         mSocket.connect();
+
     }
 
     @Override
@@ -478,4 +491,25 @@ public class ChatFragment extends Fragment {
             }
         }
     };
+
+    @Override
+    public void fetchBegin() {
+        Log.d(TAG, "fetchBegin: ");
+    }
+
+    @Override
+    public void fetchFailed(Exception e) {
+        Log.e(TAG, "fetchFailed: ", e);
+
+    }
+
+    @Override
+    public void fetchComplete(Message message) {
+        mQuestion = (Question) message;
+        inflateQuestionDetails();
+    }
+
+    private void inflateQuestionDetails() {
+
+    }
 }
