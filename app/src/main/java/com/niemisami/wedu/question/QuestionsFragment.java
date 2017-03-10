@@ -533,6 +533,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     public void onQuestionClick(int itemPosition) {
         Intent launchQuestionDetails = new Intent(getActivity(), ChatActivity.class);
         launchQuestionDetails.putExtra(Question.EXTRA_QUESTION_ID, mQuestions.get(itemPosition).getId());
+        launchQuestionDetails.putExtra(Question.EXTRA_QUESTION_COLOR, mAdapter.getItemBackgroundColorId(itemPosition));
         startActivity(launchQuestionDetails);
     }
 

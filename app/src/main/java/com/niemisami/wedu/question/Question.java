@@ -12,6 +12,7 @@ public class Question extends Message {
 
 
     public static final String EXTRA_QUESTION_ID = "extra_question_id";
+    public static final String EXTRA_QUESTION_COLOR = "extra_question_color";
 
     public static final String DEFAULT_COURSE = "Koodikerho";
 

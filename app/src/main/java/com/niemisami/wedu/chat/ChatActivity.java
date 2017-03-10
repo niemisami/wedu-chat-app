@@ -31,6 +31,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private OkHttpClient mClient;
     private String mQuestionId;
+    private int mQuestionBackgroundColor;
     private WeduNetworkCallbacks mNetworkCallbacks;
 
     @Override
@@ -40,6 +41,7 @@ public class ChatActivity extends AppCompatActivity {
 
         mClient = new OkHttpClient();
         mQuestionId = getIntent().getExtras().getString(Question.EXTRA_QUESTION_ID);
+        mQuestionBackgroundColor = getIntent().getExtras().getInt(Question.EXTRA_QUESTION_COLOR);
         inflateFragment();
     }
 
@@ -112,7 +114,6 @@ public class ChatActivity extends AppCompatActivity {
                             }
                         }
                     });
-
                 }
             }
         });
@@ -120,6 +121,10 @@ public class ChatActivity extends AppCompatActivity {
 
     private boolean isDataRequired() {
         return mNetworkCallbacks != null;
+    }
+
+    public int getQuestionBackgroundColor() {
+        return mQuestionBackgroundColor;
     }
 }
 

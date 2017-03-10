@@ -31,7 +31,7 @@ public class MessageJsonParser {
 
                 Log.d(TAG, "run: " + data.toString());
                 type = Question.TYPE_MESSAGE_QUESTION;
-                username = data.getString("username");
+                username = data.getString("user");
                 message = data.getString("message");
                 id = data.getString("_id");
                 created = data.getLong("created");

@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -32,6 +33,7 @@ import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.utils.ToolbarUpdater;
+import com.niemisami.wedu.utils.WeduDateUtils;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
 import org.json.JSONException;
@@ -63,11 +65,16 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     private boolean mTyping = false;
     private Handler mTypingHandler = new Handler();
     private String mUsername;
+    private int mQuestionBackgroundColor;
     private Socket mSocket;
 
     private Boolean isConnected = true;
     private Question mQuestion;
 
+
+    private TextView mCreatedView, mQuestionView, mUpvotesView;
+    private ImageView mSolvedIcon;
+    private ImageButton mUpvoteButton, mDownvoteButton;
 
 
     public ChatFragment() {
@@ -106,7 +113,9 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat, container, false);
+        View view = inflater.inflate(R.layout.fragment_chat, container, false);
+        initViews(view);
+        return view;
     }
 
     @Override
@@ -187,6 +196,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         }
 
         mUsername = data.getStringExtra("username");
+
         int numUsers = data.getIntExtra("numUsers", 1);
 
         addLog(getResources().getString(R.string.message_welcome));
@@ -505,11 +515,88 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     @Override
     public void fetchComplete(Message message) {
-        mQuestion = (Question) message;
-        inflateQuestionDetails();
+        if(message != null) {
+            mQuestion = (Question) message;
+            mUsername = "Sami";
+            inflateQuestionDetails();
+        } else {
+            Log.e(TAG, "fetchComplete: null message" );
+            getActivity().finish();
+        }
     }
 
     private void inflateQuestionDetails() {
+        setQuestionMessage(mQuestion.getMessage());
+        setCreated(mQuestion.getCreated());
+        displayAsSolved(mQuestion.isSolved());
+        setUpvotes(mQuestion.getUpvotes());
+        setQuestionBackgroundColor();
+    }
+
+
+    private void initViews(View view) {
+
+        mCreatedView = (TextView) view.findViewById(R.id.question_created);
+        mQuestionView = (TextView) view.findViewById(R.id.question_message);
+        mUpvotesView = (TextView) view.findViewById(R.id.label_upvotes);
+        mSolvedIcon = (ImageView) view.findViewById(R.id.icon_solved);
+        mUpvoteButton = (ImageButton) view.findViewById(R.id.button_upvote_question);
+        mDownvoteButton = (ImageButton) view.findViewById(R.id.button_downvote_question);
+
+//        view.setOnClickListener(onQuestionClickListener);
+//        mUpvoteButton.setOnClickListener(onUpvoteClickListener);
+//        mDownvoteButton.setOnClickListener(onDownvoteClickListener);
+    }
+
+    public void displayAsSolved(boolean solved) {
+        int displayIcon = (solved ? View.VISIBLE : View.INVISIBLE);
+        mSolvedIcon.setVisibility(displayIcon);
+    }
+
+    public void setCreated(long dateMillis) {
+        if (null == mCreatedView) return;
+
+        long normalizedDate = WeduDateUtils.normalizeDate(dateMillis);
+        String dateString = WeduDateUtils.getFriendlyDateString(getActivity(), normalizedDate, true);
+        mCreatedView.setText(dateString);
+    }
+
+    public void setQuestionMessage(String message) {
+        if (null == mQuestionView) return;
+        mQuestionView.setText(message);
+    }
+
+    private void setQuestionBackgroundColor() {
+        mQuestionBackgroundColor = ((ChatActivity) getActivity()).getQuestionBackgroundColor();
+        View parent = (View) mCreatedView.getParent();
+        parent.setBackgroundColor(mQuestionBackgroundColor);
 
     }
+
+    public void setUpvotes(int upvotes) {
+        mUpvotesView.setText(Integer.toString(upvotes));
+    }
+
+    /**
+     * ClickListeners for question item
+     */
+//
+//    private View.OnClickListener onQuestionClickListener = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//            mQuestionOnClickHandler.onQuestionClick(getAdapterPosition());
+//        }
+//    };
+//    private View.OnClickListener onDownvoteClickListener = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//            mQuestionOnClickHandler.onDownvoteClick(getAdapterPosition());
+//        }
+//    };
+//    private View.OnClickListener onUpvoteClickListener = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//            mQuestionOnClickHandler.onUpvoteClick(getAdapterPosition());
+//        }
+//    };
 }

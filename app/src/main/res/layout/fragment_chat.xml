@@ -2,24 +2,26 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="@color/login_background">
+    android:background="@color/login_background"
+    android:orientation="vertical">
 
     <include
         android:id="@+id/message_input_layout"
-        layout="@layout/layout_comment_input"/>
+        layout="@layout/layout_comment_input" />
 
-    <android.support.constraint.ConstraintLayout
+    <include
+        android:id="@+id/question_details"
+        layout="@layout/item_question"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content" />
 
-    </android.support.constraint.ConstraintLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/messages"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@id/message_input_layout"
+        android:layout_below="@id/question_details"
         android:scrollbarStyle="outsideOverlay"
         android:scrollbars="vertical"
         tools:listitem="@layout/item_message" />

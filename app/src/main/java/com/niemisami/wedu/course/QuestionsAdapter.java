@@ -17,6 +17,7 @@ import com.niemisami.wedu.utils.WeduDateUtils;
 import java.util.List;
 
 import static android.media.CamcorderProfile.get;
+import static android.os.Build.VERSION_CODES.M;
 
 /**
  * Created by Sami on 23.2.2017.
@@ -78,6 +79,22 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
         return mQuestions.size();
     }
 
+    public int getItemBackgroundColorId(int position) {
+        String message = mQuestions.get(position).getMessage();
+        return getQuestionBackgroundColor(message.substring(0, message.length()));
+    }
+
+
+    private int getQuestionBackgroundColor(String hashableString) {
+        int hash = 7;
+        for (int i = 0, len = hashableString.length(); i < len; i++) {
+            hash = hashableString.codePointAt(i) + (hash << 5) - hash;
+        }
+        int index = Math.abs(hash % mQuestionColors.length);
+        return mQuestionColors[index];
+    }
+
+
     @Override
     public int getItemViewType(int position) {
         return mQuestions.get(position).getType();
@@ -126,16 +143,6 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
         public void setUpvotes(int upvotes) {
             mUpvotesView.setText(Integer.toString(upvotes));
         }
-
-        private int getQuestionBackgroundColor(String hashableString) {
-            int hash = 7;
-            for (int i = 0, len = hashableString.length(); i < len; i++) {
-                hash = hashableString.codePointAt(i) + (hash << 5) - hash;
-            }
-            int index = Math.abs(hash % mQuestionColors.length);
-            return mQuestionColors[index];
-        }
-
 
         /**
          * ClickListeners for question item
