@@ -59,7 +59,6 @@ public class MessageJsonParser {
 
             if (data.getInt("type") == Question.TYPE_MESSAGE_QUESTION || data.getInt("type") == Message.TYPE_MESSAGE_OWN) {
 
-                Log.d(TAG, "run: " + data.toString());
                 type = data.getInt("type");
                 username = data.getString("user");
                 message = data.getString("message");

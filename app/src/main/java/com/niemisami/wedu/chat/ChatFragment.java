@@ -282,7 +282,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         }
 
         mInputMessageView.setText("");
-//        addMessage(mUsername, message);
+        addMessage(mUsername, message);
 
         // perform the sending message attempt.
 
@@ -359,7 +359,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    isConnected = false;    
+                    isConnected = false;
 //                    showToast(R.string.disconnect);
                 }
             });
@@ -586,6 +586,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     private void setQuestionBackgroundColor() {
         mQuestionBackgroundColor = ((ChatActivity) getActivity()).getQuestionBackgroundColor();
+        ((ChatActivity) getActivity()).matchToolbarColorWithQuestion();
         View parent = (View) mCreatedView.getParent();
         parent.setBackgroundColor(mQuestionBackgroundColor);
 
