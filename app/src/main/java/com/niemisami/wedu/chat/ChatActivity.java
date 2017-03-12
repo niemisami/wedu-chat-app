@@ -50,9 +50,9 @@ public class ChatActivity extends AppCompatActivity {
         super.onAttachFragment(fragment);
         if (fragment instanceof WeduNetworkCallbacks) {
             mNetworkCallbacks = (WeduNetworkCallbacks) fragment;
+            new MessageFetchTask().execute(mQuestionId);
         }
 
-        new MessageFetchTask().execute(mQuestionId);
     }
 
     private void inflateFragment() {
@@ -76,7 +76,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void getWebservice(final String requestId) {
 
-        String requestUrl = getString(R.string.server_end_point_local) + "/message/message/" + requestId;
+        String requestUrl = getString(R.string.server_end_point_local) + "/message/getMessage/" + requestId;
         final Request request = new Request.Builder().url(requestUrl).build();
         mClient.newCall(request).enqueue(new Callback() {
             @Override
@@ -99,18 +99,16 @@ public class ChatActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             if (isDataRequired()) {
-                                Question question = null;
+                                String data = null;
                                 try {
-                                    JSONObject data = new JSONObject(response.body().string());
-                                    question = MessageJsonParser.parseQuestion(data);
-                                } catch (JSONException e) {
-                                    Log.e(TAG, "onResponse: ", e);
-                                } catch (IOException e) {
+
+                                    data = response.body().string();
+                                }  catch (IOException e) {
                                     Log.e(TAG, "onResponse: ", e);
                                 } catch (NullPointerException e) {
                                     Log.e(TAG, "onResponse: ", e);
                                 }
-                                mNetworkCallbacks.fetchComplete(question);
+                                mNetworkCallbacks.fetchComplete(data);
                             }
                         }
                     });

@@ -32,6 +32,7 @@ import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.question.Question;
+import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduDateUtils;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
@@ -51,6 +52,7 @@ import okhttp3.Response;
 
 import static android.R.attr.x;
 import static android.content.ContentValues.TAG;
+import static com.niemisami.wedu.utils.MessageJsonParser.parseQuestion;
 
 public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
@@ -357,9 +359,8 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    isConnected = false;
-
-                    showToast(R.string.disconnect);
+                    isConnected = false;    
+//                    showToast(R.string.disconnect);
                 }
             });
         }
@@ -518,13 +519,26 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     }
 
     @Override
-    public void fetchComplete(Message message) {
-        if(message != null) {
-            mQuestion = (Question) message;
+    public void fetchComplete(String data) {
+        Question question = null;
+        try {
+            question = MessageJsonParser.parseQuestion(new JSONObject(data));
+
+
+        } catch (NullPointerException e) {
+            Log.w(TAG, "fetchComplete: null json data", e);
+            getActivity().finish();
+        } catch (JSONException e) {
+            Log.w(TAG, "fetchComplete: null json data", e);
+            getActivity().finish();
+        }
+
+        if (question != null) {
+            mQuestion = question;
             mUsername = "Sami";
             inflateQuestionDetails();
         } else {
-            Log.e(TAG, "fetchComplete: null message" );
+            Log.e(TAG, "fetchComplete: null message");
             getActivity().finish();
         }
     }

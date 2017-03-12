@@ -39,6 +39,7 @@ import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.utils.FabUpdater;
 import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.ToolbarUpdater;
+import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -55,7 +56,7 @@ import static com.niemisami.wedu.R.id.linearLayout;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler, MainActivity.OnFabClickListener {
+public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler, MainActivity.OnFabClickListener, WeduNetworkCallbacks {
 
     private static final int REQUEST_LOGIN = 0;
 
@@ -571,5 +572,27 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         }
 
 
+    }
+
+    @Override
+    public void fetchBegin() {
+        //TODO: displayProgressBar();
+    }
+
+    @Override
+    public void fetchFailed(Exception e) {
+        //TODO: hideProgressBar();
+
+    }
+
+    @Override
+    public void fetchComplete(String data) {
+        //TODO: hideProgressBar();
+        try {
+            mQuestions = MessageJsonParser.parseQuestionList(data);
+            mAdapter.setQuestions(mQuestions);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "onResponse: ", e);
+        }
     }
 }

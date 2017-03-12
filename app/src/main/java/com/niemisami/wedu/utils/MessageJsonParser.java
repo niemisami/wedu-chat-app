@@ -9,6 +9,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import static android.R.attr.data;
 import static android.content.ContentValues.TAG;
 
 /**
@@ -16,6 +23,28 @@ import static android.content.ContentValues.TAG;
  */
 
 public class MessageJsonParser {
+
+    public static List<Question> parseQuestionList(String data) throws NullPointerException {
+        if (data == null) {
+            throw new NullPointerException("Error parsing questions JSON");
+        }
+        List<Question> questions = new ArrayList<>();
+        JSONArray questionJsons = null;
+        try {
+            questionJsons = new JSONArray(data);
+        } catch (JSONException e) {
+            throw new NullPointerException("parseQestionsList");
+        }
+
+        for (int i = 0; i < questionJsons.length(); i++) {
+            try {
+                questions.add(parseQuestion(questionJsons.getJSONObject(i)));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+        return questions;
+    }
 
     public static Question parseQuestion(JSONObject data) throws NullPointerException {
         int type;
@@ -35,7 +64,11 @@ public class MessageJsonParser {
                 username = data.getString("user");
                 message = data.getString("message");
                 id = data.getString("_id");
-                created = data.getLong("created");
+
+                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+                Date date = format.parse(data.getString("created"));
+                created = date.getTime();
+
                 courseId = data.getString("course");
 
                 JSONArray upvotedUsers = data.getJSONObject("grade").getJSONArray("upvotes");
@@ -49,6 +82,10 @@ public class MessageJsonParser {
             }
 
         } catch (JSONException e) {
+            Log.e(TAG, "parseQuestion: ", e);
+            throw new NullPointerException("Failed to parse Question JSON");
+        } catch (ParseException e) {
+            e.printStackTrace();
             throw new NullPointerException("Failed to parse Question JSON");
         }
 
