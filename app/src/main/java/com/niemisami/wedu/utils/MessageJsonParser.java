@@ -2,6 +2,7 @@ package com.niemisami.wedu.utils;
 
 import android.util.Log;
 
+import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.question.Question;
 
 import org.json.JSONArray;
@@ -27,10 +28,10 @@ public class MessageJsonParser {
         boolean isSolved;
         try {
 
-            if (data.getInt("type") == Question.TYPE_MESSAGE_QUESTION) {
+            if (data.getInt("type") == Question.TYPE_MESSAGE_QUESTION || data.getInt("type") == Message.TYPE_MESSAGE_OWN) {
 
                 Log.d(TAG, "run: " + data.toString());
-                type = Question.TYPE_MESSAGE_QUESTION;
+                type = data.getInt("type");
                 username = data.getString("user");
                 message = data.getString("message");
                 id = data.getString("_id");

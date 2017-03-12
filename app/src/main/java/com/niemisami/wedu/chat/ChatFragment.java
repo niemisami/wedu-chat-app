@@ -49,6 +49,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.R.attr.x;
 import static android.content.ContentValues.TAG;
 
 public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
@@ -195,7 +196,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
             return;
         }
 
-        mUsername = data.getStringExtra("username");
+        mUsername = data.getStringExtra("user");
 
         int numUsers = data.getIntExtra("numUsers", 1);
 
@@ -286,6 +287,8 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         JSONObject obj = new JSONObject();
         try {
             obj.put("message", message.trim());
+            obj.put("type", Message.TYPE_MESSAGE_OWN);
+            obj.put("course", Question.DEFAULT_COURSE);
             mSocket.emit("new message", obj);
 
         } catch (JSONException e) {
@@ -321,7 +324,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
                             JSONObject obj = new JSONObject();
                             try {
-                                obj.put("username", mUsername);
+                                obj.put("user", mUsername);
                                 mSocket.emit("add user", obj);
                             } catch (JSONException e) {
                                 Log.e(TAG, "attemptSend: ", e);
@@ -384,9 +387,10 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
                     String username;
                     String message;
                     try {
-                        username = data.getString("username");
+                        username = data.getString("user");
                         message = data.getString("message");
                     } catch (JSONException e) {
+                        Log.e(TAG, "run: ", e);
                         return;
                     }
                     Log.d(TAG, "run: " + data.toString());
@@ -408,7 +412,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
                     String username;
                     int numUsers;
                     try {
-                        username = data.getString("username");
+                        username = data.getString("user");
                         numUsers = data.getInt("numUsers");
                     } catch (JSONException e) {
                         return;
@@ -431,7 +435,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
                     String username;
                     int numUsers;
                     try {
-                        username = data.getString("username");
+                        username = data.getString("user");
                         numUsers = data.getInt("numUsers");
                     } catch (JSONException e) {
                         return;
@@ -454,7 +458,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
                     JSONObject data = (JSONObject) args[0];
                     String username;
                     try {
-                        username = data.getString("username");
+                        username = data.getString("user");
                     } catch (JSONException e) {
                         return;
                     }
@@ -473,7 +477,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
                     JSONObject data = (JSONObject) args[0];
                     String username;
                     try {
-                        username = data.getString("username");
+                        username = data.getString("user");
                     } catch (JSONException e) {
                         return;
                     }
@@ -493,7 +497,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
             JSONObject obj = new JSONObject();
             try {
 
-                obj.put("username", mUsername);
+                obj.put("user", mUsername);
                 mSocket.emit("stop typing", obj);
 
             } catch (JSONException e) {

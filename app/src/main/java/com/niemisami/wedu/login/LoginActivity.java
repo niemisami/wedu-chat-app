@@ -124,7 +124,7 @@ public class LoginActivity extends AppCompatActivity {
 
             JSONObject obj = new JSONObject();
             try {
-                obj.put("username", mUsername);
+                obj.put("user", mUsername);
             } catch (JSONException e) {
                 Log.e(TAG, "attemptLogin: ", e);
             }
@@ -156,7 +156,7 @@ public class LoginActivity extends AppCompatActivity {
             }
 
             Intent intent = new Intent();
-            intent.putExtra("username", mUsername);
+            intent.putExtra("user", mUsername);
             intent.putExtra("numUsers", numUsers);
             setResult(RESULT_OK, intent);
             finish();

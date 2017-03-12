@@ -206,7 +206,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             return;
         }
 
-        mUsername = data.getStringExtra("username");
+        mUsername = data.getStringExtra("user");
         int numUsers = data.getIntExtra("numUsers", 1);
 
 
@@ -321,7 +321,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
                             JSONObject obj = new JSONObject();
                             try {
-                                obj.put("username", mUsername);
+                                obj.put("user", mUsername);
                                 mSocket.emit("add user", obj);
                             } catch (JSONException e) {
                                 Log.e(TAG, "attemptSend: ", e);
@@ -397,7 +397,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                     String username;
                     int numUsers;
                     try {
-                        username = data.getString("username");
+                        username = data.getString("user");
                         numUsers = data.getInt("numUsers");
                     } catch (JSONException e) {
                         return;
@@ -419,7 +419,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                     String username;
                     int numUsers;
                     try {
-                        username = data.getString("username");
+                        username = data.getString("user");
                         numUsers = data.getInt("numUsers");
                     } catch (JSONException e) {
                         return;

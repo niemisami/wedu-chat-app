@@ -76,7 +76,7 @@ public class ChatActivity extends AppCompatActivity {
 
     private void getWebservice(final String requestId) {
 
-        String requestUrl = getString(R.string.server_end_point_local) + "/message/" + requestId;
+        String requestUrl = getString(R.string.server_end_point_local) + "/message/message/" + requestId;
         final Request request = new Request.Builder().url(requestUrl).build();
         mClient.newCall(request).enqueue(new Callback() {
             @Override
