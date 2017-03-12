@@ -6,7 +6,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.MenuItem;
 
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.question.Question;
@@ -25,6 +27,8 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.R.attr.fragment;
+
 public class ChatActivity extends AppCompatActivity {
 
     public static final String TAG = ChatActivity.class.getSimpleName();
@@ -34,6 +38,7 @@ public class ChatActivity extends AppCompatActivity {
     private int mQuestionBackgroundColor;
     private WeduNetworkCallbacks mNetworkCallbacks;
 
+    private Toolbar mToolbar;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,6 +48,21 @@ public class ChatActivity extends AppCompatActivity {
         mQuestionId = getIntent().getExtras().getString(Question.EXTRA_QUESTION_ID);
         mQuestionBackgroundColor = getIntent().getExtras().getInt(Question.EXTRA_QUESTION_COLOR);
         inflateFragment();
+
+        mToolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+        final int id = item.getItemId();
+        switch (id) {
+            case android.R.id.home:
+                onBackPressed();
+                break;
+        }
+        return true;
     }
 
     @Override
@@ -123,6 +143,10 @@ public class ChatActivity extends AppCompatActivity {
 
     public int getQuestionBackgroundColor() {
         return mQuestionBackgroundColor;
+    }
+
+    public void matchToolbarColorWithQuestion() {
+        mToolbar.setBackgroundColor(mQuestionBackgroundColor);
     }
 }
 

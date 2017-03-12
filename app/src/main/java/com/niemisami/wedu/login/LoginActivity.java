@@ -37,7 +37,6 @@ public class LoginActivity extends AppCompatActivity {
     private String mUsername;
 
     private Socket mSocket;
-    private Toolbar mToolbar;
     private boolean mTryingToLogin;
 
     private ProgressBar mLoginProgressBar;
@@ -48,10 +47,6 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-
-        mToolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(mToolbar);
-        mToolbar.setTitle(getString(R.string.app_name));
 
         WeduApplication app = (WeduApplication) getApplication();
         mSocket = app.getSocket();
