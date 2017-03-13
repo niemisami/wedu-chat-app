@@ -96,7 +96,9 @@ public class MessageJsonParser {
                 .created(created)
                 .upvotes(upvotes)
                 .build();
-
-
     }
+
+//    public static Message parseMessage(JSONObject data) throws NullPointerException {
+//
+//    }
 }

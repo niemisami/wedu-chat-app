@@ -6,6 +6,7 @@
     <string name="action_send">Send</string>
     <string name="prompt_message">Message</string>
     <string name="server_end_point_local">http://10.0.2.2:3000</string>
+    <string name="server_end_point_heroku">https://hidden-everglades-97180.herokuapp.com</string>
     <string name="server_end_point">http://wedudev.herokuapp.com</string>
 
     <string name="connect">Connected</string>
@@ -14,6 +15,7 @@
 
     <!-- messages -->
     <string name="message_welcome">Welcome to Wedu</string>
+    <string name="message_welcome_chat">Please help the mate in need!</string>
     <plurals name="message_participants">
         <item quantity="one">there\'s %d participant online</item>
         <item quantity="other">there are %d participants online</item>

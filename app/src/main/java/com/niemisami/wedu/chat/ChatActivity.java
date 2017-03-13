@@ -12,6 +12,7 @@ import android.view.MenuItem;
 
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.question.Question;
+import com.niemisami.wedu.utils.MessageFetchTask;
 import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.NetworkUtils;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
@@ -36,9 +37,9 @@ public class ChatActivity extends AppCompatActivity {
     private OkHttpClient mClient;
     private String mQuestionId;
     private int mQuestionBackgroundColor;
-    private WeduNetworkCallbacks mNetworkCallbacks;
 
     private Toolbar mToolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,10 +70,9 @@ public class ChatActivity extends AppCompatActivity {
     public void onAttachFragment(Fragment fragment) {
         super.onAttachFragment(fragment);
         if (fragment instanceof WeduNetworkCallbacks) {
-            mNetworkCallbacks = (WeduNetworkCallbacks) fragment;
-            new MessageFetchTask().execute(mQuestionId);
+            String requestUrl = "getMessage/" + mQuestionId;
+            new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(requestUrl);
         }
-
     }
 
     private void inflateFragment() {
@@ -82,64 +82,6 @@ public class ChatActivity extends AppCompatActivity {
         fragmentTransaction.commit();
     }
 
-    private class MessageFetchTask extends AsyncTask<String, Void, Void> {
-
-        @Override
-        protected Void doInBackground(String... ids) {
-            if (ids.length == 1 && isDataRequired()) {
-                mNetworkCallbacks.fetchBegin();
-                getWebservice(ids[0]);
-            }
-            return null;
-        }
-    }
-
-    private void getWebservice(final String requestId) {
-
-        String requestUrl = getString(R.string.server_end_point_local) + "/message/getMessage/" + requestId;
-        final Request request = new Request.Builder().url(requestUrl).build();
-        mClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, final IOException e) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isDataRequired())
-                            mNetworkCallbacks.fetchFailed(e);
-                        else
-                            finish();
-                    }
-                });
-            }
-
-            @Override
-            public void onResponse(Call call, final Response response) {
-                if (isDataRequired()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (isDataRequired()) {
-                                String data = null;
-                                try {
-
-                                    data = response.body().string();
-                                }  catch (IOException e) {
-                                    Log.e(TAG, "onResponse: ", e);
-                                } catch (NullPointerException e) {
-                                    Log.e(TAG, "onResponse: ", e);
-                                }
-                                mNetworkCallbacks.fetchComplete(data);
-                            }
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    private boolean isDataRequired() {
-        return mNetworkCallbacks != null;
-    }
 
     public int getQuestionBackgroundColor() {
         return mQuestionBackgroundColor;

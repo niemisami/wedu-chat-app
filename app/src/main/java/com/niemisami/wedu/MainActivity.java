@@ -14,6 +14,7 @@ import android.view.View;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.question.QuestionsFragment;
 import com.niemisami.wedu.utils.FabUpdater;
+import com.niemisami.wedu.utils.MessageFetchTask;
 import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
@@ -81,8 +82,8 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
             mOnFabClickListener = (OnFabClickListener) fragment;
         }
         if (fragment instanceof WeduNetworkCallbacks) {
-            mNetworkCallbacks = (WeduNetworkCallbacks) fragment;
-            new QuestionsFetchTask().execute();
+            String request = "getQuestions";
+            new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(request);
         }
     }
 
@@ -114,63 +115,6 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
 
     public interface OnFabClickListener {
         void onFabClicked();
-    }
-
-    private class QuestionsFetchTask extends AsyncTask<String, Void, Void> {
-
-        @Override
-        protected Void doInBackground(String... ids) {
-            mNetworkCallbacks.fetchBegin();
-            getWebservice();
-            return null;
-        }
-    }
-
-    private void getWebservice() {
-
-        String requestUrl = getString(R.string.server_end_point_local) + "/message/getQuestions";
-        final Request request = new Request.Builder().url(requestUrl).build();
-        mClient.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, final IOException e) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (isDataRequired())
-                            mNetworkCallbacks.fetchFailed(e);
-                        else
-                            finish();
-                    }
-                });
-            }
-
-            @Override
-            public void onResponse(Call call, final Response response) {
-                if (isDataRequired()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (isDataRequired()) {
-                                String data = "";
-                                try {
-                                    data = response.body().string();
-                                } catch (IOException e) {
-                                    Log.e(TAG, "onResponse: ", e);
-                                } catch (NullPointerException e) {
-                                    Log.e(TAG, "onResponse: ", e);
-                                }
-                                mNetworkCallbacks.fetchComplete(data);
-                            }
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-
-    private boolean isDataRequired() {
-        return mNetworkCallbacks != null;
     }
 
 }
