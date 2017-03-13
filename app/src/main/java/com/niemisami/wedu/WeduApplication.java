@@ -21,8 +21,8 @@ public class WeduApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-//        CHAT_SERVER_URL = getString(R.string.server_end_point_heroku);
-        CHAT_SERVER_URL = getString(R.string.server_end_point_local);
+        CHAT_SERVER_URL = getString(R.string.server_end_point_heroku);
+//        CHAT_SERVER_URL = getString(R.string.server_end_point_local);
 
         try {
             mSocket = IO.socket(CHAT_SERVER_URL);
