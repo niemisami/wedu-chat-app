@@ -60,7 +60,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     private static final int TYPING_TIMER_LENGTH = 600;
 
-    private ToolbarUpdater mToolbarUpdater;
+//    private ToolbarUpdater mToolbarUpdater;
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
     private List<Message> mMessages = new ArrayList<>();
@@ -86,8 +86,8 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof ToolbarUpdater)
-            mToolbarUpdater = (ToolbarUpdater) context;
+//        if (context instanceof ToolbarUpdater)
+//            mToolbarUpdater = (ToolbarUpdater) context;
         mAdapter = new MessageAdapter(context, mMessages);
     }
 
@@ -105,8 +105,8 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
         mSocket.on("new message", onNewMessage);
-        mSocket.on("user joined", onUserJoined);
-        mSocket.on("user left", onUserLeft);
+//        mSocket.on("user joined", onUserJoined);
+//        mSocket.on("user left", onUserLeft);
         mSocket.on("typing", onTyping);
         mSocket.on("stop typing", onStopTyping);
         mSocket.connect();
@@ -132,8 +132,8 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
         mSocket.off("new message", onNewMessage);
-        mSocket.off("user joined", onUserJoined);
-        mSocket.off("user left", onUserLeft);
+//        mSocket.off("user joined", onUserJoined);
+//        mSocket.off("user left", onUserLeft);
         mSocket.off("typing", onTyping);
         mSocket.off("stop typing", onStopTyping);
     }
@@ -200,10 +200,10 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
         mUsername = data.getStringExtra("user");
 
-        int numUsers = data.getIntExtra("numUsers", 1);
+//        int numUsers = data.getIntExtra("numUsers", 1);
 
         addLog(getResources().getString(R.string.message_welcome));
-        addParticipantsLog(numUsers);
+//        addParticipantsLog(numUsers);
     }
 
     @Override
@@ -236,9 +236,9 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         scrollToBottom();
     }
 
-    private void addParticipantsLog(int numUsers) {
-        mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
-    }
+//    private void addParticipantsLog(int numUsers) {
+//        mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
+//    }
 
     private void addMessage(String username, String message) {
         if (username.equals(mUsername)) {
@@ -282,7 +282,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         }
 
         mInputMessageView.setText("");
-        addMessage(mUsername, message);
+//        addMessage(mUsername, message);
 
         // perform the sending message attempt.
 
@@ -404,52 +404,52 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         }
     };
 
-    private Emitter.Listener onUserJoined = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    int numUsers;
-                    try {
-                        username = data.getString("user");
-                        numUsers = data.getInt("numUsers");
-                    } catch (JSONException e) {
-                        return;
-                    }
-
-                    addLog(getResources().getString(R.string.message_user_joined, username));
-                    addParticipantsLog(numUsers);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onUserLeft = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    int numUsers;
-                    try {
-                        username = data.getString("user");
-                        numUsers = data.getInt("numUsers");
-                    } catch (JSONException e) {
-                        return;
-                    }
-
-                    addLog(getResources().getString(R.string.message_user_left, username));
-                    addParticipantsLog(numUsers);
-                    removeTyping(username);
-                }
-            });
-        }
-    };
+//    private Emitter.Listener onUserJoined = new Emitter.Listener() {
+//        @Override
+//        public void call(final Object... args) {
+//            getActivity().runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    JSONObject data = (JSONObject) args[0];
+//                    String username;
+//                    int numUsers;
+//                    try {
+//                        username = data.getString("user");
+//                        numUsers = data.getInt("numUsers");
+//                    } catch (JSONException e) {
+//                        return;
+//                    }
+//
+//                    addLog(getResources().getString(R.string.message_user_joined, username));
+//                    addParticipantsLog(numUsers);
+//                }
+//            });
+//        }
+//    };
+//
+//    private Emitter.Listener onUserLeft = new Emitter.Listener() {
+//        @Override
+//        public void call(final Object... args) {
+//            getActivity().runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    JSONObject data = (JSONObject) args[0];
+//                    String username;
+//                    int numUsers;
+//                    try {
+//                        username = data.getString("user");
+//                        numUsers = data.getInt("numUsers");
+//                    } catch (JSONException e) {
+//                        return;
+//                    }
+//
+//                    addLog(getResources().getString(R.string.message_user_left, username));
+//                    addParticipantsLog(numUsers);
+//                    removeTyping(username);
+//                }
+//            });
+//        }
+//    };
 
     private Emitter.Listener onTyping = new Emitter.Listener() {
         @Override
@@ -537,7 +537,12 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         if (question != null) {
             mQuestion = question;
             mUsername = "Sami";
-            inflateQuestionDetails();
+            getActivity().runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    inflateQuestionDetails();
+                }
+            });
         } else {
             Log.e(TAG, "fetchComplete: null message");
             getActivity().finish();
