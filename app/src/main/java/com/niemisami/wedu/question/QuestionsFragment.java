@@ -389,11 +389,14 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
                     Question question = null;
                     try {
-                        question = MessageJsonParser.parseQuestion(data);
+                        if (MessageJsonParser.parseMessageType(data) == Question.TYPE_MESSAGE_QUESTION) {
+                            question = MessageJsonParser.parseQuestion(data);
+                        } else {
+                            return;
+                        }
                     } catch (NullPointerException e) {
                         Log.e(TAG, "run: ", e);
                     }
-
                     addQuestion(question);
                 }
             });

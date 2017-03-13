@@ -16,13 +16,17 @@ import java.util.Date;
 import java.util.List;
 
 import static android.R.attr.data;
+import static android.R.attr.id;
 import static android.content.ContentValues.TAG;
+import static com.niemisami.wedu.R.id.username;
 
 /**
  * Created by Sami on 10.3.2017.
  */
 
 public class MessageJsonParser {
+
+
 
     public static List<Question> parseQuestionList(String data) throws NullPointerException {
         if (data == null) {
@@ -44,6 +48,19 @@ public class MessageJsonParser {
             }
         }
         return questions;
+    }
+
+    public static int parseMessageType(JSONObject data) {
+        int type = -1;
+
+        try {
+            type = data.getInt("type");
+        } catch (JSONException e) {
+            Log.e(TAG, "parseQuestion: ", e);
+            throw new NullPointerException("Failed to parse message type");
+        }
+        return type;
+
     }
 
     public static Question parseQuestion(JSONObject data) throws NullPointerException {
