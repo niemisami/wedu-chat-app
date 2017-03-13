@@ -4,8 +4,10 @@ package com.niemisami.wedu.question;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -36,8 +38,13 @@ import com.niemisami.wedu.chat.ChatActivity;
 import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
+import com.niemisami.wedu.settings.SettingsActivity;
+import com.niemisami.wedu.settings.WeduPreferenceHelper;
+import com.niemisami.wedu.utils.AnimationHelper;
 import com.niemisami.wedu.utils.FabUpdater;
+import com.niemisami.wedu.utils.MessageFetchTask;
 import com.niemisami.wedu.utils.MessageJsonParser;
+import com.niemisami.wedu.utils.NetworkUtils;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
@@ -72,7 +79,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     private String mUsername;
     private Socket mSocket;
 
-    private Boolean isConnected = true;
+    private Boolean isConnected = false;
 
 
     public QuestionsFragment() {
@@ -95,6 +102,11 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
 
         WeduApplication app = (WeduApplication) getActivity().getApplication();
         mSocket = app.getSocket();
@@ -106,9 +118,13 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mSocket.on("user joined", onUserJoined);
         mSocket.on("user left", onUserLeft);
         mSocket.on("voted", onVoted);
-        mSocket.connect();
 
-        startSignIn();
+        mUsername = WeduPreferenceHelper.getUsername(getActivity());
+
+        if (mUsername == null || mUsername.length() == 0) {
+            startSignIn();
+        }
+        mSocket.connect();
     }
 
     @Override
@@ -123,7 +139,11 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     @Override
     public void onDestroy() {
         super.onDestroy();
+    }
 
+    @Override
+    public void onPause() {
+        super.onPause();
         mSocket.disconnect();
 
         mSocket.off(Socket.EVENT_CONNECT, onConnect);
@@ -134,7 +154,9 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mSocket.off("user joined", onUserJoined);
         mSocket.off("user left", onUserLeft);
         mSocket.off("voted", onVoted);
+        isConnected = false;
     }
+
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -210,46 +232,16 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mUsername = data.getStringExtra("user");
         int numUsers = data.getIntExtra("numUsers", 1);
 
-
-//        addQuestion("Sami", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod");
-//        addQuestion("Pyry", "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo. Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt. Neque porro quisquam est, qui dolorem ipsum");
-//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
-//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
-//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
-//        addQuestion("Anna", "quaerat voluptatem. Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea com");
-
         addParticipantsLog(numUsers);
     }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_chat, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_leave) {
-            leave();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
 
     private void addParticipantsLog(int numUsers) {
 
         // TODO: come up with better place to check welcome text. It is hidden when new question is added in attemptSend()
         if (mAdapter.getItemCount() == 0) {
             mWelcomeText.setVisibility(View.VISIBLE);
+        } else {
+            mWelcomeText.setVisibility(View.GONE);
         }
 
         if (mToolbarUpdater != null)
@@ -265,10 +257,33 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mAdapter.notifyItemInserted(mQuestions.size() - 1);
     }
 
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_chat, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(final MenuItem item) {
+        final int id = item.getItemId();
+        switch (id) {
+            case android.R.id.home:
+                getActivity().onBackPressed();
+                break;
+            case R.id.action_settings:
+                startActivity(new Intent(getActivity(), SettingsActivity.class));
+                break;
+            case R.id.action_leave:
+                leave();
+                break;
+        }
+        return true;
+    }
+
     private void leave() {
         mUsername = null;
         mSocket.disconnect();
-        mSocket.connect();
+        WeduPreferenceHelper.clearUsername(getActivity());
         startSignIn();
     }
 
@@ -331,10 +346,9 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                         } else {
                             getActivity().finish();
                         }
+                        showToast(R.string.connect);
+                        isConnected = true;
                     }
-                    Toast.makeText(getActivity().getApplicationContext(),
-                            R.string.connect, Toast.LENGTH_LONG).show();
-                    isConnected = true;
                 }
             });
         }
@@ -347,8 +361,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 @Override
                 public void run() {
                     isConnected = false;
-                    Toast.makeText(getActivity().getApplicationContext(),
-                            R.string.disconnect, Toast.LENGTH_LONG).show();
+                    showToast(R.string.disconnect);
                 }
             });
         }
@@ -360,8 +373,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getActivity().getApplicationContext(),
-                            R.string.error_connect, Toast.LENGTH_LONG).show();
+                    showToast(R.string.error_connect);
                 }
             });
         }
@@ -570,9 +582,20 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(requestingImeView.getWindowToken(), 0);
         }
-
-
     }
+
+    private Toast mToast;
+
+    private void showToast(int stringResourceId) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+        if (getActivity() != null) {
+            mToast = Toast.makeText(getActivity().getApplicationContext(), stringResourceId, Toast.LENGTH_LONG);
+            mToast.show();
+        }
+    }
+
 
     @Override
     public void fetchBegin() {
@@ -589,10 +612,26 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     public void fetchComplete(String data) {
         //TODO: hideProgressBar();
         try {
-            mQuestions = MessageJsonParser.parseQuestionList(data);
-            mAdapter.setQuestions(mQuestions);
+            final List<Question> questions = MessageJsonParser.parseQuestionList(data);
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (questions.size() < 10) {
+                            for (Question q : questions) {
+                                addQuestion(q);
+                            }
+                        } else {
+                            mQuestions = questions;
+                            mAdapter.setQuestions(mQuestions);
+                        }
+                    }
+                });
+            }
+
         } catch (NullPointerException e) {
             Log.e(TAG, "onResponse: ", e);
         }
+
     }
 }

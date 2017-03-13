@@ -10,6 +10,7 @@
         layout="@layout/layout_comment_input" />
 
     <include
+        android:visibility="gone"
         android:id="@+id/question_details"
         layout="@layout/item_question"
         android:layout_width="match_parent"

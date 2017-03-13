@@ -97,7 +97,11 @@ public class QuestionsAdapter extends RecyclerView.Adapter<QuestionsAdapter.Ques
 
     @Override
     public int getItemViewType(int position) {
-        return mQuestions.get(position).getType();
+        if(mQuestions.get(position) != null) {
+            return mQuestions.get(position).getType();
+        } else {
+            return -1;
+        }
     }
 
     public class QuestionAdapterViewHolder extends RecyclerView.ViewHolder {

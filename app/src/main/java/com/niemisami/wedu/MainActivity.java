@@ -1,5 +1,6 @@
 package com.niemisami.wedu;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -8,27 +9,17 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 
-import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.question.QuestionsFragment;
+import com.niemisami.wedu.settings.SettingsActivity;
 import com.niemisami.wedu.utils.FabUpdater;
 import com.niemisami.wedu.utils.MessageFetchTask;
-import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements ToolbarUpdater, FabUpdater {
 
@@ -38,11 +29,6 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
     private OnFabClickListener mOnFabClickListener;
     private FloatingActionButton mFab;
     private FabUpdater mFabUpdater;
-
-
-    private OkHttpClient mClient;
-    private WeduNetworkCallbacks mNetworkCallbacks;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +49,8 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
                 mOnFabClickListener.onFabClicked();
             }
         });
-        mClient = new OkHttpClient();
     }
+
 
     private void inflateFragment() {
         FragmentManager fragmentManager = getSupportFragmentManager();
@@ -73,6 +59,8 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
         fragmentTransaction.commit();
     }
 
+//
+//    private WeduNetworkCallbacks mNetworkCallbacks;
 
     @Override
     public void onAttachFragment(Fragment fragment) {
@@ -86,6 +74,10 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
             new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(request);
         }
     }
+
+//    public void loadQuestions() {
+//        new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(request);
+//    }
 
     @Override
     public void setSubtitle(String subtitle) {

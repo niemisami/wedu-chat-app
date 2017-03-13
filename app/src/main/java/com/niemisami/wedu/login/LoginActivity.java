@@ -1,8 +1,11 @@
 package com.niemisami.wedu.login;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -24,6 +27,7 @@ import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
+import com.niemisami.wedu.settings.WeduPreferenceHelper;
 import com.niemisami.wedu.utils.AnimationHelper;
 
 import org.json.JSONException;
@@ -53,10 +57,10 @@ public class LoginActivity extends AppCompatActivity {
 
         mLoginTimeoutHandler = new Handler();
 
-        TextView appLabel = (TextView)findViewById(R.id.label_app_title);
-        Typeface custom_font = Typeface.createFromAsset(getAssets(),  "fonts/Lobster-Regular.ttf");
+        TextView appLabel = (TextView) findViewById(R.id.label_app_title);
+        Typeface custom_font = Typeface.createFromAsset(getAssets(), "fonts/Lobster-Regular.ttf");
         appLabel.setTypeface(custom_font);
-        
+
         // Set up the login form.
         mUsernameView = (EditText) findViewById(R.id.username_input);
         mUsernameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -80,6 +84,8 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         mSocket.on("login", onLogin);
+
+        mSocket.connect();
     }
 
     @Override
@@ -97,6 +103,9 @@ public class LoginActivity extends AppCompatActivity {
      */
     private void attemptLogin() {
         // Reset errors.
+        if(!mSocket.connected()) {
+            mSocket.connect();
+        }
         if (!mTryingToLogin) {
             mTryingToLogin = true;
             AnimationHelper.alphaIn(mLoginProgressBar);
@@ -133,6 +142,7 @@ public class LoginActivity extends AppCompatActivity {
                     mTryingToLogin = false;
                     AnimationHelper.alphaOut(mLoginProgressBar);
                     displayToast(getString(R.string.error_connect));
+                    mSocket.connect();
                 }
             }, LOGIN_TIMEOUT);
         }
@@ -150,6 +160,8 @@ public class LoginActivity extends AppCompatActivity {
                 return;
             }
 
+            storeUsername();
+
             Intent intent = new Intent();
             intent.putExtra("user", mUsername);
             intent.putExtra("numUsers", numUsers);
@@ -157,6 +169,10 @@ public class LoginActivity extends AppCompatActivity {
             finish();
         }
     };
+
+    private void storeUsername() {
+        WeduPreferenceHelper.storeUsername(this, mUsername);
+    }
 
     private void displayToast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();

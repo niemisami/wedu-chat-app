@@ -32,27 +32,18 @@ import com.niemisami.wedu.R;
 import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.question.Question;
+import com.niemisami.wedu.settings.WeduPreferenceHelper;
 import com.niemisami.wedu.utils.MessageJsonParser;
-import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduDateUtils;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
-import static android.R.attr.x;
 import static android.content.ContentValues.TAG;
-import static com.niemisami.wedu.utils.MessageJsonParser.parseQuestion;
 
 public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
@@ -71,10 +62,11 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     private int mQuestionBackgroundColor;
     private Socket mSocket;
 
-    private Boolean isConnected = true;
+    private Boolean isConnected = false;
     private Question mQuestion;
 
 
+    private View mQuestionDetailsContainer;
     private TextView mCreatedView, mQuestionView, mUpvotesView;
     private ImageView mSolvedIcon;
     private ImageButton mUpvoteButton, mDownvoteButton;
@@ -98,6 +90,29 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
         setHasOptionsMenu(true);
 
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mSocket.disconnect();
+
+        mSocket.off(Socket.EVENT_CONNECT, onConnect);
+        mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
+        mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
+        mSocket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
+        mSocket.off("new message", onNewMessage);
+//        mSocket.off("user joined", onUserJoined);
+//        mSocket.off("user left", onUserLeft);
+        mSocket.off("typing", onTyping);
+        mSocket.off("stop typing", onStopTyping);
+        isConnected = false;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
         WeduApplication app = (WeduApplication) getActivity().getApplication();
         mSocket = app.getSocket();
         mSocket.on(Socket.EVENT_CONNECT, onConnect);
@@ -109,6 +124,9 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 //        mSocket.on("user left", onUserLeft);
         mSocket.on("typing", onTyping);
         mSocket.on("stop typing", onStopTyping);
+
+        mUsername = WeduPreferenceHelper.getUsername(getActivity());
+
         mSocket.connect();
 
     }
@@ -125,17 +143,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     public void onDestroy() {
         super.onDestroy();
 
-        mSocket.disconnect();
 
-        mSocket.off(Socket.EVENT_CONNECT, onConnect);
-        mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
-        mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
-        mSocket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        mSocket.off("new message", onNewMessage);
-//        mSocket.off("user joined", onUserJoined);
-//        mSocket.off("user left", onUserLeft);
-        mSocket.off("typing", onTyping);
-        mSocket.off("stop typing", onStopTyping);
     }
 
     @Override
@@ -271,7 +279,10 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     private void attemptSend() {
         if (null == mUsername) return;
-        if (!mSocket.connected()) return;
+        if (!mSocket.connected()) {
+            mSocket.connect();
+            return;
+        }
 
         mTyping = false;
 
@@ -336,9 +347,9 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
                         } else {
                             getActivity().finish();
                         }
+                        showToast(R.string.connect);
+                        isConnected = true;
                     }
-                    showToast(R.string.connect);
-                    isConnected = true;
                 }
             });
         }
@@ -536,7 +547,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
         if (question != null) {
             mQuestion = question;
-            mUsername = "Sami";
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -555,11 +565,13 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         displayAsSolved(mQuestion.isSolved());
         setUpvotes(mQuestion.getUpvotes());
         setQuestionBackgroundColor();
+        mQuestionDetailsContainer.setVisibility(View.VISIBLE);
     }
 
 
     private void initViews(View view) {
 
+        mQuestionDetailsContainer = view.findViewById(R.id.question_details);
         mCreatedView = (TextView) view.findViewById(R.id.question_created);
         mQuestionView = (TextView) view.findViewById(R.id.question_message);
         mUpvotesView = (TextView) view.findViewById(R.id.label_upvotes);

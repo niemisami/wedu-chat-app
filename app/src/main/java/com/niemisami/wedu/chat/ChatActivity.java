@@ -1,5 +1,6 @@
 package com.niemisami.wedu.chat;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -12,6 +13,7 @@ import android.view.MenuItem;
 
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.question.Question;
+import com.niemisami.wedu.settings.SettingsActivity;
 import com.niemisami.wedu.utils.MessageFetchTask;
 import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.NetworkUtils;
@@ -61,6 +63,9 @@ public class ChatActivity extends AppCompatActivity {
         switch (id) {
             case android.R.id.home:
                 onBackPressed();
+                break;
+            case R.id.action_settings:
+                startActivity(new Intent(this, SettingsActivity.class));
                 break;
         }
         return true;

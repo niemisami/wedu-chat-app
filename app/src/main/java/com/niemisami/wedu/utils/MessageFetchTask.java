@@ -15,6 +15,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import static android.R.string.ok;
 import static android.content.ContentValues.TAG;
 
 /**
@@ -23,9 +24,10 @@ import static android.content.ContentValues.TAG;
 
 public class MessageFetchTask extends AsyncTask<String, Void, Void> {
 
-    private Context mContext;
-    private WeduNetworkCallbacks mNetworkCallbacks;
-    private OkHttpClient mClient;
+    private static Context mContext;
+    private static WeduNetworkCallbacks mNetworkCallbacks;
+    private static OkHttpClient mClient;
+
 
     public MessageFetchTask(Context context, WeduNetworkCallbacks networkCallbacks) {
         mContext = context;
@@ -34,7 +36,7 @@ public class MessageFetchTask extends AsyncTask<String, Void, Void> {
 
     }
 
-    private boolean isDataRequired() {
+    private static boolean isDataRequired() {
         return mNetworkCallbacks != null;
     }
 
@@ -47,9 +49,9 @@ public class MessageFetchTask extends AsyncTask<String, Void, Void> {
         return null;
     }
 
-    private void getWebservice(final String requestUrl) {
+    private static void getWebservice(final String requestUrl) {
 
-        String url = mContext.getString(R.string.server_end_point_heroku) + "/message/" + requestUrl;
+        String url = mContext.getString(R.string.server_end_point_local) + "/message/" + requestUrl;
         final Request request = new Request.Builder().url(url).build();
         mClient.newCall(request).enqueue(new Callback() {
             @Override
