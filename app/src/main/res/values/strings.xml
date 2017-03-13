@@ -42,5 +42,8 @@
         I have a placeholding temperament. Lorem Ipsum is unattractive, both inside and out. I fully understand why it’s former users left it for something else. They made a good decision.</string>
     <string name="lorem">Bacon ipsum dolor amet You’re disgusting.</string>
 
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
 
 </resources>
