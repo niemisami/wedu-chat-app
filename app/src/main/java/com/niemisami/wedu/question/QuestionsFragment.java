@@ -361,7 +361,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 @Override
                 public void run() {
                     isConnected = false;
-                    showToast(R.string.disconnect);
+//                    showToast(R.string.disconnect);
                 }
             });
         }

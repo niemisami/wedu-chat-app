@@ -7,7 +7,8 @@
     android:layout_gravity="bottom"
     android:background="@color/login_background"
     android:gravity="center_vertical"
-    android:padding="@dimen/md_keylines">
+    android:paddingStart="@dimen/md_keylines"
+    android:paddingEnd="@dimen/md_keylines">
 
 
     <ImageButton
@@ -19,7 +20,9 @@
         android:layout_alignParentEnd="true"
         android:background="@drawable/circle"
         android:contentDescription="@string/action_send"
-        android:src="@drawable/ic_send" />
+        android:src="@drawable/ic_send"
+        android:layout_marginTop="@dimen/sm_keylines"
+        android:layout_marginBottom="@dimen/md_keylines"/>
 
     <EditText
         android:id="@+id/message_input"

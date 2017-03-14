@@ -31,6 +31,10 @@ public class WeduApplication extends Application {
         }
     }
 
+    public String getAPIEndPoint() {
+        return CHAT_SERVER_URL;
+    }
+
     public Socket getSocket() {
         return mSocket;
     }

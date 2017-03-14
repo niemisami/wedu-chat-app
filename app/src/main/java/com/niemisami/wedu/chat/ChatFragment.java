@@ -248,6 +248,12 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 //        mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
 //    }
 
+    private void addAllMessages(List<Question> messages) {
+        for(Question message : messages) {
+            addMessage(message.getUsername(), message.getMessage());
+        }
+    }
+
     private void addMessage(String username, String message) {
         if (username.equals(mUsername)) {
             mMessages.add(new Message.Builder("none", Message.TYPE_MESSAGE_OWN)
@@ -532,9 +538,12 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     @Override
     public void fetchComplete(String data) {
+
         Question question = null;
+        List<Question> messages = null;
         try {
             question = MessageJsonParser.parseQuestion(new JSONObject(data));
+            messages = MessageJsonParser.parseMessageArray(new JSONObject(data));
 
 
         } catch (NullPointerException e) {
@@ -545,18 +554,23 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
             getActivity().finish();
         }
 
-        if (question != null) {
+
+        final List<Question> list = messages;
+        if (question != null && messages != null) {
             mQuestion = question;
+
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     inflateQuestionDetails();
+                    addAllMessages(list);
                 }
             });
         } else {
             Log.e(TAG, "fetchComplete: null message");
             getActivity().finish();
         }
+
     }
 
     private void inflateQuestionDetails() {

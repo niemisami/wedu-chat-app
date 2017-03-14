@@ -50,7 +50,7 @@ public class MessageFetchTask extends AsyncTask<String, Void, Void> {
     }
 
     private static void getWebservice(final String requestUrl) {
-
+//        String url = mContext.getString(R.string.server_end_point_local) + "/message/" + requestUrl;
         String url = mContext.getString(R.string.server_end_point_heroku) + "/message/" + requestUrl;
         final Request request = new Request.Builder().url(url).build();
         mClient.newCall(request).enqueue(new Callback() {

@@ -27,6 +27,14 @@ import static com.niemisami.wedu.R.id.username;
 public class MessageJsonParser {
 
 
+    public static JSONObject parseStringToJSON(String data) {
+        try {
+            return new JSONObject(data);
+        } catch (JSONException e) {
+            Log.w(TAG, "parseStringToJSON: ", e);
+        }
+        return null;
+    }
 
     public static List<Question> parseQuestionList(String data) throws NullPointerException {
         if (data == null) {
@@ -61,6 +69,29 @@ public class MessageJsonParser {
         }
         return type;
 
+    }
+
+    public static List<Question> parseMessageArray(JSONObject data) throws NullPointerException {
+        if (data == null) {
+            throw new NullPointerException("Data don't have messages");
+        }
+
+        JSONArray array = null;
+        try {
+             array = data.getJSONObject("thread").getJSONArray("messages");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        if(array == null) {
+            throw new NullPointerException();
+        }
+
+        List<Question> messages = new ArrayList<>();
+        for(int i = 0; i < array.length(); i++) {
+            messages.add(parseQuestion(data));
+        }
+
+        return messages;
     }
 
     public static Question parseQuestion(JSONObject data) throws NullPointerException {
@@ -115,7 +146,4 @@ public class MessageJsonParser {
                 .build();
     }
 
-//    public static Message parseMessage(JSONObject data) throws NullPointerException {
-//
-//    }
 }
