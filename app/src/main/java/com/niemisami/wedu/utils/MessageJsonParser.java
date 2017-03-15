@@ -78,20 +78,20 @@ public class MessageJsonParser {
 
         JSONArray array = null;
         try {
-             array = data.getJSONObject("thread").getJSONArray("messages");
+            array = data.getJSONObject("thread").getJSONArray("messages");
+
+
+            List<Question> messages = new ArrayList<>();
+            for (int i = 0; i < array.length(); i++) {
+                messages.add(parseQuestion(array.getJSONObject(i)));
+            }
+
+            return messages;
+
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        if(array == null) {
-            throw new NullPointerException();
-        }
-
-        List<Question> messages = new ArrayList<>();
-        for(int i = 0; i < array.length(); i++) {
-            messages.add(parseQuestion(data));
-        }
-
-        return messages;
+        return null;
     }
 
     public static Question parseQuestion(JSONObject data) throws NullPointerException {

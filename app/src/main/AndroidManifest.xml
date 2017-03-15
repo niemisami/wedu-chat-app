@@ -21,7 +21,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".login.LoginActivity" />
-        <activity android:name=".chat.ChatActivity" />
+        <activity android:name=".chat.ChatActivity"
+            android:windowSoftInputMode="stateAlwaysHidden"/>
         <activity android:name=".settings.SettingsActivity"/>
     </application>
 
