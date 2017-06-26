@@ -2,8 +2,6 @@ package com.niemisami.wedu.question;
 
 import com.niemisami.wedu.chat.Message;
 
-import static android.R.attr.type;
-
 /**
  * Created by Sami on 23.2.2017.
  */
@@ -14,7 +12,7 @@ public class Question extends Message {
     public static final String EXTRA_QUESTION_ID = "extra_question_id";
     public static final String EXTRA_QUESTION_COLOR = "extra_question_color";
 
-    public static final String DEFAULT_COURSE = "Koodikerho";
+    public static final String DEFAULT_COURSE = "DTEK101";
 
     private String mCourseId = "koodikerho-id";
     private String mLecture = "Koodikerho";

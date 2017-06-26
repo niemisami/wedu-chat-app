@@ -15,10 +15,10 @@
   -->
 <resources>
 
-    <style name="AppTheme" parent="AppTheme.Base">
-        <item name="android:windowDrawsSystemBarBackgrounds">false</item>
-        <item name="android:statusBarColor">@color/primary_dark</item>
-        <item name="android:windowTranslucentNavigation">false</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
-    </style>
+    <!--<style name="AppTheme" parent="AppTheme.Base">-->
+        <!--<item name="android:windowDrawsSystemBarBackgrounds">false</item>-->
+        <!--<item name="android:statusBarColor">@color/primary_dark</item>-->
+        <!--<item name="android:windowTranslucentNavigation">false</item>-->
+        <!--<item name="android:navigationBarColor">@android:color/transparent</item>-->
+    <!--</style>-->
 </resources>

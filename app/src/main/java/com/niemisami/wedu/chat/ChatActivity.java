@@ -1,42 +1,24 @@
 package com.niemisami.wedu.chat;
 
 import android.content.Intent;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.MenuItem;
 
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.settings.SettingsActivity;
 import com.niemisami.wedu.utils.MessageFetchTask;
-import com.niemisami.wedu.utils.MessageJsonParser;
-import com.niemisami.wedu.utils.NetworkUtils;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
-import static android.R.attr.fragment;
 
 public class ChatActivity extends AppCompatActivity {
 
     public static final String TAG = ChatActivity.class.getSimpleName();
 
-    private OkHttpClient mClient;
     private String mQuestionId;
     private int mQuestionBackgroundColor;
 
@@ -47,7 +29,6 @@ public class ChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        mClient = new OkHttpClient();
         mQuestionId = getIntent().getExtras().getString(Question.EXTRA_QUESTION_ID);
         mQuestionBackgroundColor = getIntent().getExtras().getInt(Question.EXTRA_QUESTION_COLOR);
         inflateFragment();

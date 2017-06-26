@@ -1,6 +1,5 @@
 package com.niemisami.wedu.utils;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -15,7 +14,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import static android.R.string.ok;
 import static android.content.ContentValues.TAG;
 
 /**
@@ -50,8 +48,8 @@ public class MessageFetchTask extends AsyncTask<String, Void, Void> {
     }
 
     private static void getWebservice(final String requestUrl) {
-//        String url = mContext.getString(R.string.server_end_point_local) + "/message/" + requestUrl;
-        String url = mContext.getString(R.string.server_end_point_heroku) + "/message/" + requestUrl;
+        String url = mContext.getString(R.string.server_end_point_local) + "/message/" + requestUrl;
+//        String url = mContext.getString(R.string.server_end_point_heroku) + "/message/" + requestUrl;
         final Request request = new Request.Builder().url(url).build();
         mClient.newCall(request).enqueue(new Callback() {
             @Override

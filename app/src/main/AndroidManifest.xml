@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.niemisami.wedu">
+          package="com.niemisami.wedu">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:name=".WeduApplication"
@@ -15,14 +15,14 @@
             android:name=".MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN"/>
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".login.LoginActivity" />
+        <activity android:name=".login.LoginActivity"/>
         <activity android:name=".chat.ChatActivity"
-            android:windowSoftInputMode="stateAlwaysHidden"/>
+                  android:windowSoftInputMode="stateAlwaysHidden"/>
         <activity android:name=".settings.SettingsActivity"/>
     </application>
 

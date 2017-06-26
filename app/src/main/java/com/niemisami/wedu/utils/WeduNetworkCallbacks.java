@@ -1,9 +1,5 @@
 package com.niemisami.wedu.utils;
 
-import com.niemisami.wedu.chat.Message;
-
-import org.json.JSONObject;
-
 /**
  * Created by Sami on 10.3.2017.
  */

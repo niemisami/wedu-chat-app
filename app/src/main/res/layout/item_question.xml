@@ -105,19 +105,27 @@
 
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/clock_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_clock"
+            android:layout_marginBottom="12dp"
+            android:layout_marginStart="16dp"
+            android:paddingEnd="@dimen/spacing"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
         <TextView
             android:id="@+id/question_created"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            android:layout_marginStart="16dp"
-            android:paddingLeft="@dimen/spacing"
-            android:paddingRight="@dimen/spacing"
             android:textAppearance="@style/TextAppearance.AppCompat.Caption"
             android:textColor="@color/ambient_white"
             android:textSize="@dimen/labels_text_size"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintStart_toEndOf="@id/clock_icon"
             tools:text="5 mins" />
 
     </android.support.constraint.ConstraintLayout>

@@ -1,21 +1,15 @@
 package com.niemisami.wedu;
 
-import android.content.Intent;
-import android.os.AsyncTask;
+import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 
 import com.niemisami.wedu.question.QuestionsFragment;
-import com.niemisami.wedu.settings.SettingsActivity;
 import com.niemisami.wedu.utils.FabUpdater;
 import com.niemisami.wedu.utils.MessageFetchTask;
 import com.niemisami.wedu.utils.ToolbarUpdater;
@@ -59,9 +53,6 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
         fragmentTransaction.commit();
     }
 
-//
-//    private WeduNetworkCallbacks mNetworkCallbacks;
-
     @Override
     public void onAttachFragment(Fragment fragment) {
         super.onAttachFragment(fragment);
@@ -71,13 +62,16 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
         }
         if (fragment instanceof WeduNetworkCallbacks) {
             String request = "getQuestions";
+            // TODO: alter AsyncTask to Obeservable
             new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(request);
         }
     }
 
-//    public void loadQuestions() {
-//        new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(request);
-//    }
+    @Override
+    public void setTitle(String title) {
+        if(mToolbar != null)
+            mToolbar.setTitle(title);
+    }
 
     @Override
     public void setSubtitle(String subtitle) {

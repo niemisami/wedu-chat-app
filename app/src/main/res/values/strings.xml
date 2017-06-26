@@ -11,7 +11,7 @@
 
     <string name="connect">Connected</string>
     <string name="disconnect">Disconnected, Please check your internet connection</string>
-    <string name="error_connect">Failed to connect</string>
+    <string name="error_connect">Oh no! Couldn\'t load data</string>
 
     <!-- messages -->
     <string name="message_welcome">Welcome to Wedu</string>

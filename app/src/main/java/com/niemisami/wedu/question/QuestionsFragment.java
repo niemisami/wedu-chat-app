@@ -4,10 +4,8 @@ package com.niemisami.wedu.question;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,7 +18,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -40,11 +37,8 @@ import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.settings.SettingsActivity;
 import com.niemisami.wedu.settings.WeduPreferenceHelper;
-import com.niemisami.wedu.utils.AnimationHelper;
 import com.niemisami.wedu.utils.FabUpdater;
-import com.niemisami.wedu.utils.MessageFetchTask;
 import com.niemisami.wedu.utils.MessageJsonParser;
-import com.niemisami.wedu.utils.NetworkUtils;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
@@ -55,10 +49,8 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-import static android.R.attr.type;
 import static android.content.ContentValues.TAG;
 import static android.content.Context.INPUT_METHOD_SERVICE;
-import static com.niemisami.wedu.R.id.linearLayout;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -329,28 +321,32 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     private Emitter.Listener onConnect = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (!isConnected) {
-                        if (null != mUsername) {
+            getActivity().runOnUiThread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            if (!isConnected) {
+                                if (null != mUsername) {
 
-                            JSONObject obj = new JSONObject();
-                            try {
-                                obj.put("user", mUsername);
-                                mSocket.emit("add user", obj);
-                            } catch (JSONException e) {
-                                Log.e(TAG, "attemptSend: ", e);
+                                    JSONObject obj = new JSONObject();
+                                    try {
+                                        obj.put("user", mUsername);
+                                        mSocket.emit("add user", obj);
+
+                                        obj.put("room", Question.DEFAULT_COURSE);
+                                        mSocket.emit("select room", obj);
+                                    } catch (JSONException e) {
+                                        Log.e(TAG, "attemptSend: ", e);
+                                    }
+
+                                } else {
+                                    getActivity().finish();
+                                }
+                                isConnected = true;
                             }
-
-                        } else {
-                            getActivity().finish();
                         }
-                        showToast(R.string.connect);
-                        isConnected = true;
                     }
-                }
-            });
+            );
         }
     };
 
@@ -374,6 +370,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 @Override
                 public void run() {
                     showToast(R.string.error_connect);
+                    mQuestions.clear();
+                    mAdapter.setQuestions(mQuestions);
                 }
             });
         }
@@ -628,6 +626,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                             mQuestions = questions;
                             mAdapter.setQuestions(mQuestions);
                         }
+                        if (mQuestions.size() > 0)
+                            mToolbarUpdater.setTitle(mQuestions.get(0).getCourseId());
                     }
                 });
             }

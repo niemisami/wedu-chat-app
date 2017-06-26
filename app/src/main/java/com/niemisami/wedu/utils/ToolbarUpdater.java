@@ -6,6 +6,8 @@ package com.niemisami.wedu.utils;
 
 public interface ToolbarUpdater {
 
+    void setTitle(String title);
+
     void setSubtitle(String subtitle);
 
     void clearSubtitle();

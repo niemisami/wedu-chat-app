@@ -34,6 +34,7 @@ import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.settings.WeduPreferenceHelper;
 import com.niemisami.wedu.utils.MessageJsonParser;
+import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduDateUtils;
 import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
@@ -51,7 +52,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     private static final int TYPING_TIMER_LENGTH = 600;
 
-//    private ToolbarUpdater mToolbarUpdater;
+    private ToolbarUpdater mToolbarUpdater;
     private RecyclerView mMessagesView;
     private EditText mInputMessageView;
     private List<Message> mMessages = new ArrayList<>();
@@ -65,7 +66,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     private Boolean isConnected = false;
     private Question mQuestion;
 
-
     private View mQuestionDetailsContainer;
     private TextView mCreatedView, mQuestionView, mUpvotesView;
     private ImageView mSolvedIcon;
@@ -78,8 +78,8 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-//        if (context instanceof ToolbarUpdater)
-//            mToolbarUpdater = (ToolbarUpdater) context;
+        if (context instanceof ToolbarUpdater)
+            mToolbarUpdater = (ToolbarUpdater) context;
         mAdapter = new MessageAdapter(context, mMessages);
     }
 
@@ -223,12 +223,8 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_leave) {
             leave();
             return true;
@@ -249,7 +245,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
 //    }
 
     private void addAllMessages(List<Question> messages) {
-        for(Question message : messages) {
+        for (Question message : messages) {
             addMessage(message.getUsername(), message.getMessage());
         }
     }
@@ -353,7 +349,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
                         } else {
                             getActivity().finish();
                         }
-                        showToast(R.string.connect);
                         isConnected = true;
                     }
                 }
@@ -558,12 +553,21 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         final List<Question> list = messages;
         if (question != null && messages != null) {
             mQuestion = question;
+//            mToolbarUpdater.setTitle(mQuestion.getCourseId());
 
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     inflateQuestionDetails();
                     addAllMessages(list);
+
+                    JSONObject obj = new JSONObject();
+                    try {
+                        obj.put("room", mQuestion.getId());
+                        mSocket.emit("select room", obj);
+                    } catch (JSONException e) {
+                        Log.e(TAG, "attemptSend: ", e);
+                    }
                 }
             });
         } else {
@@ -593,9 +597,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         mUpvoteButton = (ImageButton) view.findViewById(R.id.button_upvote_question);
         mDownvoteButton = (ImageButton) view.findViewById(R.id.button_downvote_question);
 
-//        view.setOnClickListener(onQuestionClickListener);
-//        mUpvoteButton.setOnClickListener(onUpvoteClickListener);
-//        mDownvoteButton.setOnClickListener(onDownvoteClickListener);
     }
 
     public void displayAsSolved(boolean solved) {
@@ -621,33 +622,9 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         ((ChatActivity) getActivity()).matchToolbarColorWithQuestion();
         View parent = (View) mCreatedView.getParent();
         parent.setBackgroundColor(mQuestionBackgroundColor);
-
     }
 
     public void setUpvotes(int upvotes) {
         mUpvotesView.setText(Integer.toString(upvotes));
     }
-
-    /**
-     * ClickListeners for question item
-     */
-//
-//    private View.OnClickListener onQuestionClickListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//            mQuestionOnClickHandler.onQuestionClick(getAdapterPosition());
-//        }
-//    };
-//    private View.OnClickListener onDownvoteClickListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//            mQuestionOnClickHandler.onDownvoteClick(getAdapterPosition());
-//        }
-//    };
-//    private View.OnClickListener onUpvoteClickListener = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//            mQuestionOnClickHandler.onUpvoteClick(getAdapterPosition());
-//        }
-//    };
 }
