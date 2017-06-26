@@ -15,10 +15,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static android.R.attr.data;
-import static android.R.attr.id;
 import static android.content.ContentValues.TAG;
-import static com.niemisami.wedu.R.id.username;
 
 /**
  * Created by Sami on 10.3.2017.
@@ -38,14 +35,14 @@ public class MessageJsonParser {
 
     public static List<Question> parseQuestionList(String data) throws NullPointerException {
         if (data == null) {
-            throw new NullPointerException("Error parsing questions JSON");
+            throw new NullPointerException("No data provided");
         }
         List<Question> questions = new ArrayList<>();
         JSONArray questionJsons = null;
         try {
             questionJsons = new JSONArray(data);
         } catch (JSONException e) {
-            throw new NullPointerException("parseQestionsList");
+            throw new NullPointerException("Error parsing questions JSON");
         }
 
         for (int i = 0; i < questionJsons.length(); i++) {
@@ -71,7 +68,7 @@ public class MessageJsonParser {
 
     }
 
-    public static List<Question> parseMessageArray(JSONObject data) throws NullPointerException {
+    public static List<Question> parseMessageList(JSONObject data) throws NullPointerException {
         if (data == null) {
             throw new NullPointerException("Data don't have messages");
         }

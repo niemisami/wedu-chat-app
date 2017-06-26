@@ -120,8 +120,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
         mSocket.on("new message", onNewMessage);
-//        mSocket.on("user joined", onUserJoined);
-//        mSocket.on("user left", onUserLeft);
         mSocket.on("typing", onTyping);
         mSocket.on("stop typing", onStopTyping);
 
@@ -538,7 +536,7 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         List<Question> messages = null;
         try {
             question = MessageJsonParser.parseQuestion(new JSONObject(data));
-            messages = MessageJsonParser.parseMessageArray(new JSONObject(data));
+            messages = MessageJsonParser.parseMessageList(new JSONObject(data));
 
 
         } catch (NullPointerException e) {
