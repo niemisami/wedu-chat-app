@@ -14,16 +14,19 @@
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait">
+        </activity>
+        <activity android:name=".login.LoginActivity"/>
+        <activity
+            android:name=".chat.ChatActivity"
+            android:windowSoftInputMode="stateAlwaysHidden"/>
+        <activity android:name=".settings.SettingsActivity"/>
+        <activity android:name=".RxActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".login.LoginActivity"/>
-        <activity android:name=".chat.ChatActivity"
-                  android:windowSoftInputMode="stateAlwaysHidden"/>
-        <activity android:name=".settings.SettingsActivity"/>
     </application>
 
 </manifest>

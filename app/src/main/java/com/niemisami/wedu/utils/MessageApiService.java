@@ -2,7 +2,6 @@ package com.niemisami.wedu.utils;
 
 import android.accounts.NetworkErrorException;
 
-import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.question.Question;
 
 import org.json.JSONObject;
