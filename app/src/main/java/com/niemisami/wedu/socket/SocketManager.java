@@ -15,7 +15,6 @@ import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Cancellable;
 import io.reactivex.internal.operators.completable.CompletableCreate;
 
@@ -54,7 +53,7 @@ public class SocketManager {
     }
 
     /**
-     * Socket singleton
+     * @return SocketManager instance
      */
     public static SocketManager getSocketManager() {
         if (mInstance == null) {
@@ -73,144 +72,23 @@ public class SocketManager {
         mInstance = null;
     }
 
-//    mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
-//    mSocket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-
-//
-
-
-    public Completable createConnectionListener() {
-        return CompletableCreate.create(new CompletableOnSubscribe() {
-            @Override
-            public void subscribe(final CompletableEmitter emitter) throws Exception {
-                final Emitter.Listener onConnected = new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        emitter.onComplete();
-                    }
-                };
-                mSocket.on(Socket.EVENT_CONNECT, onConnected);
-
-                emitter.setDisposable(new Disposable() {
-                    @Override
-                    public void dispose() {
-                        mSocket.off(Socket.EVENT_CONNECT, onConnected);
-                    }
-
-                    @Override
-                    public boolean isDisposed() {
-                        return false;
-                    }
-                });
-            }
-        });
-    }
-
-    public Completable createDisconnectionListener() {
-        return CompletableCreate.create(new CompletableOnSubscribe() {
-            @Override
-            public void subscribe(final CompletableEmitter emitter) throws Exception {
-                final Emitter.Listener onDisconnected = new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        emitter.onComplete();
-                    }
-                };
-                mSocket.on(Socket.EVENT_DISCONNECT, onDisconnected);
-
-                emitter.setCancellable(new Cancellable() {
-                    @Override
-                    public void cancel() throws Exception {
-                        mSocket.off(Socket.EVENT_DISCONNECT, onDisconnected);
-                    }
-                });
-            }
-        });
-    }
-
-    public Observable<JSONObject> createLoggedUsersCountListener() {
-        return Observable.create(new ObservableOnSubscribe<JSONObject>() {
-            @Override
-            public void subscribe(final ObservableEmitter<JSONObject> emitter) throws Exception {
-                final Emitter.Listener onUserCountChanged = new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        emitter.onNext((JSONObject) args[0]);
-                    }
-                };
-                mSocket.on(EVENT_USER_LOGIN, onUserCountChanged);
-
-                emitter.setCancellable(new Cancellable() {
-                    @Override
-                    public void cancel() throws Exception {
-                        mSocket.off(EVENT_USER_LOGIN, onUserCountChanged);
-                    }
-                });
-            }
-        });
-    }
-
-    public Observable<JSONObject> createMessageListener() {
-        return Observable.create(new ObservableOnSubscribe<JSONObject>() {
-            @Override
-            public void subscribe(final ObservableEmitter<JSONObject> emitter) throws Exception {
-                final Emitter.Listener onMessageReceived = new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        emitter.onNext((JSONObject) args[0]);
-                    }
-                };
-                mSocket.on(EVENT_NEW_MESSAGE, onMessageReceived);
-
-                emitter.setCancellable(new Cancellable() {
-                    @Override
-                    public void cancel() throws Exception {
-                        mSocket.off(EVENT_NEW_MESSAGE, onMessageReceived);
-                    }
-                });
-            }
-        });
-    }
-
-    public Observable<JSONObject> createUserJoinedListener() {
-        return Observable.create(new ObservableOnSubscribe<JSONObject>() {
-            @Override
-            public void subscribe(final ObservableEmitter<JSONObject> emitter) throws Exception {
-                final Emitter.Listener onUserJoined = new Emitter.Listener() {
-                    @Override
-                    public void call(Object... args) {
-                        emitter.onNext((JSONObject) args[0]);
-                    }
-                };
-                mSocket.on(EVENT_USER_JOINED, onUserJoined);
-
-                emitter.setCancellable(new Cancellable() {
-                    @Override
-                    public void cancel() throws Exception {
-                        mSocket.off(EVENT_NEW_MESSAGE, onUserJoined);
-                    }
-                });
-            }
-        });
-    }
-
-    public Observable<JSONObject> createUserLeftListener() {
-        return createSocketAction(EVENT_USER_LEFT);
-    }
-
     /**
      * Each listener follows the same structure.
      * Method creates a new observable which registers listener of the provided event into the Socket.
      * Server response is always JSONObject
      */
-    public Observable<JSONObject> createSocketAction(final String socketEvent) {
+    private Observable<JSONObject> createObservableSocketAction(final String socketEvent) {
         return Observable.create(new ObservableOnSubscribe<JSONObject>() {
             @Override
             public void subscribe(final ObservableEmitter<JSONObject> emitter) throws Exception {
                 final Emitter.Listener listener = new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        emitter.onNext((JSONObject) args[0]);
+                        if(args.length > 0) {
+                            emitter.onNext((JSONObject) args[0]);
+                        } else {
+                            emitter.onError(new Exception("Failed to fetch requested data"));
+                        }
                     }
                 };
                 mSocket.on(socketEvent, listener);
@@ -225,9 +103,70 @@ public class SocketManager {
         });
     }
 
-//    mSocket.on("user joined", onUserJoined);
-//    mSocket.on("user left", onUserLeft);
-//    mSocket.on("voted", onVoted);
+    private Completable createCompletableSocketAction(final String socketEvent) {
+        return CompletableCreate.create(new CompletableOnSubscribe() {
+            @Override
+            public void subscribe(final CompletableEmitter emitter) throws Exception {
+                final Emitter.Listener listener = new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        emitter.onComplete();
+                    }
+                };
+                mSocket.on(socketEvent, listener);
+
+                emitter.setCancellable(new Cancellable() {
+                    @Override
+                    public void cancel() throws Exception {
+                        mSocket.off(socketEvent, listener);
+                    }
+                });
+            }
+        });
+    }
+
+
+    //FIXME: Study if connection/disconnection Completables should also be converted to Observables
+    // COMPLETABLES
+    public Completable createConnectionListener() {
+        return createCompletableSocketAction(Socket.EVENT_CONNECT);
+    }
+
+    public Completable createDisconnectionListener() {
+        return createCompletableSocketAction(Socket.EVENT_DISCONNECT);
+    }
+
+    public Completable createConnectErrorListener() {
+        return createCompletableSocketAction(Socket.EVENT_CONNECT_ERROR);
+    }
+
+    public Completable createConnectTimetoutListener() {
+        return createCompletableSocketAction(Socket.EVENT_CONNECT_TIMEOUT);
+    }
+
+
+
+    // OBSERVABLES
+    public Observable<JSONObject> createLoggedUsersCountListener() {
+        return createObservableSocketAction(EVENT_USER_LOGIN);
+    }
+
+    public Observable<JSONObject> createMessageListener() {
+        return createObservableSocketAction(EVENT_NEW_MESSAGE);
+    }
+
+    public Observable<JSONObject> createUserJoinedListener() {
+        return createObservableSocketAction(EVENT_USER_JOINED);
+    }
+
+    public Observable<JSONObject> createUserLeftListener() {
+        return createObservableSocketAction(EVENT_USER_LEFT);
+    }
+
+    public Observable<JSONObject> createMessageVotedListener() {
+        return createObservableSocketAction(EVENT_VOTED);
+    }
+
 
     /**
      * Send typing message to the server
