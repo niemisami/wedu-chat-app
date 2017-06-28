@@ -5,6 +5,7 @@ import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.utils.MessageApiService;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.URISyntaxException;
@@ -63,10 +64,12 @@ public class SocketManager {
     }
 
     public void connect() {
-        mSocket.connect();
+        if (!mSocket.connected()) {
+            mSocket.connect();
+        }
     }
 
-    public void destroy() {
+    public void disconnect() {
         mSocket.disconnect();
         mSocket = null;
         mInstance = null;
@@ -84,7 +87,7 @@ public class SocketManager {
                 final Emitter.Listener listener = new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        if(args.length > 0 && args[0] instanceof JSONObject) {
+                        if (args.length > 0 && args[0] instanceof JSONObject) {
                             emitter.onNext((JSONObject) args[0]);
                         } else {
                             emitter.onError(new Exception("Failed to handle request"));
@@ -140,11 +143,9 @@ public class SocketManager {
         return createCompletableSocketAction(Socket.EVENT_CONNECT_ERROR);
     }
 
-    public Completable createConnectTimetoutListener() {
+    public Completable createConnectTimeoutListener() {
         return createCompletableSocketAction(Socket.EVENT_CONNECT_TIMEOUT);
     }
-
-
 
     // OBSERVABLES
     public Observable<JSONObject> createLoggedUsersCountListener() {
@@ -167,16 +168,69 @@ public class SocketManager {
         return createObservableSocketAction(EVENT_VOTED);
     }
 
+    // Pass an extra value "typing" along with received JSONObject which tells whether user x is typing or not
+    public Observable<JSONObject> createTypingListener() {
+        return Observable.create(new ObservableOnSubscribe<JSONObject>() {
+            @Override
+            public void subscribe(final ObservableEmitter<JSONObject> emitter) throws Exception {
+                final Emitter.Listener startTypingListener = new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        if (args.length > 0 && args[0] instanceof JSONObject) {
+                            JSONObject typingUser = (JSONObject) args[0];
+                            try {
+                                typingUser.put("typing", true);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            emitter.onNext(typingUser);
+                        } else {
+                            emitter.onError(new Exception("Failed to handle request"));
+                        }
+                    }
+                };
+                final Emitter.Listener stopTypingListener = new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        if (args.length > 0 && args[0] instanceof JSONObject) {
+                            JSONObject typingUser = (JSONObject) args[0];
+                            try {
+                                typingUser.put("typing", false);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            emitter.onNext(typingUser);
+                        } else {
+                            emitter.onError(new Exception("Failed to handle request"));
+                        }
+                    }
+                };
+                mSocket.on(EVENT_TYPING, startTypingListener);
+                mSocket.on(EVENT_STOP_TYPING, stopTypingListener);
+
+                emitter.setCancellable(new Cancellable() {
+                    @Override
+                    public void cancel() throws Exception {
+                        mSocket.off(EVENT_TYPING, startTypingListener);
+                        mSocket.off(EVENT_STOP_TYPING, stopTypingListener);
+                    }
+                });
+            }
+        });
+    }
 
     /**
-     * Send typing message to the server
+     * Send typing action to the server
      */
     public void startTyping() {
         mSocket.emit(EVENT_TYPING);
     }
 
     /**
-     * Send stop typing message to the server
+     * Send stop typing action to the server
+     * <pre>userData: {
+     *     user: String
+     * }</pre>
      */
     public void stopTyping() {
         mSocket.emit(EVENT_STOP_TYPING);
@@ -194,7 +248,6 @@ public class SocketManager {
         mSocket.emit(EVENT_NEW_MESSAGE, messageData);
     }
 
-//    mSocket.emit("new message", obj);
 
     /**
      * <pre>userData: {

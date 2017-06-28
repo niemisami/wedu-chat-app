@@ -82,6 +82,6 @@ public class RxActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         mListenersDisposable.dispose();
-        mSocketManager.destroy();
+        mSocketManager.disconnect();
     }
 }

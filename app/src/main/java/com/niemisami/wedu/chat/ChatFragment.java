@@ -1,6 +1,5 @@
 package com.niemisami.wedu.chat;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -26,13 +25,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.github.nkzawa.emitter.Emitter;
-import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.R;
-import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.settings.WeduPreferenceHelper;
+import com.niemisami.wedu.socket.SocketManager;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduDateUtils;
 
@@ -42,6 +39,12 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.observers.DisposableCompletableObserver;
+import io.reactivex.observers.DisposableObserver;
+import io.reactivex.schedulers.Schedulers;
+
 import static android.content.ContentValues.TAG;
 
 public class ChatFragment extends Fragment {
@@ -50,23 +53,26 @@ public class ChatFragment extends Fragment {
 
     private static final int TYPING_TIMER_LENGTH = 600;
 
-    private ToolbarUpdater mToolbarUpdater;
-    private RecyclerView mMessagesView;
-    private EditText mInputMessageView;
+    private SocketManager mSocketManager;
+    private CompositeDisposable mListenersDisposable;
+
     private List<Message> mMessages = new ArrayList<>();
-    private RecyclerView.Adapter mAdapter;
     private boolean mTyping = false;
     private Handler mTypingHandler = new Handler();
     private String mUsername;
-    private Socket mSocket;
 
-    private Boolean isConnected = false;
     private Question mQuestion;
+    private Boolean isConnected = false;
 
+    private ToolbarUpdater mToolbarUpdater;
+
+    private RecyclerView mMessagesView;
+    private EditText mInputMessageView;
+    private RecyclerView.Adapter mAdapter;
     private View mQuestionDetailsContainer;
     private TextView mCreatedView, mQuestionView, mUpvotesView;
     private ImageView mSolvedIcon;
-    private ImageButton mUpvoteButton, mDownvoteButton;
+    private Toast mToast;
 
 
     public ChatFragment() {
@@ -86,41 +92,9 @@ public class ChatFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        mSocket.disconnect();
-
-        mSocket.off(Socket.EVENT_CONNECT, onConnect);
-        mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
-        mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
-        mSocket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        mSocket.off("new message", onNewMessage);
-        mSocket.off("typing", onTyping);
-        mSocket.off("stop typing", onStopTyping);
-        isConnected = false;
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        WeduApplication app = (WeduApplication) getActivity().getApplication();
-        mSocket = app.getSocket();
-        mSocket.on(Socket.EVENT_CONNECT, onConnect);
-        mSocket.on(Socket.EVENT_DISCONNECT, onDisconnect);
-        mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
-        mSocket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        mSocket.on("new message", onNewMessage);
-        mSocket.on("typing", onTyping);
-        mSocket.on("stop typing", onStopTyping);
-
-        mUsername = WeduPreferenceHelper.getUsername(getActivity());
-
-        mSocket.connect();
-
+        mSocketManager = SocketManager.getSocketManager();
+        mListenersDisposable = new CompositeDisposable();
+        setRetainInstance(true);
     }
 
     @Override
@@ -132,11 +106,177 @@ public class ChatFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        createSocketListeners();
+        mUsername = WeduPreferenceHelper.getUsername(getActivity());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mListenersDisposable.dispose();
+        isConnected = false;
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
-
-
+        mSocketManager.disconnect();
     }
+
+
+    private void createSocketListeners() {
+        //onConnect
+        mListenersDisposable.add(mSocketManager.createConnectionListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        JSONObject obj = new JSONObject();
+                        try {
+                            obj.put("user", mUsername);
+                            mSocketManager.addUser(obj);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "sendMessage: ", e);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat connection failed", e);
+                        showToast(R.string.error_connection_lost);
+                        getActivity().finish();
+                    }
+                })
+        );
+        //onDisconnect
+        mListenersDisposable.add(mSocketManager.createDisconnectionListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "Chat disconnected");
+                        showToast(R.string.error_connection_lost);
+                        getActivity().finish();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat disconnection failed", e);
+                        getActivity().finish();
+
+                    }
+                })
+        );
+        //onConnectError
+        mListenersDisposable.add(mSocketManager.createConnectErrorListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "Chat connection error");
+                        getActivity().finish();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat connection error failed", e);
+
+                    }
+                })
+        );
+        //onConnectTimeout
+        mListenersDisposable.add(mSocketManager.createConnectTimeoutListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "Chat connection timeout");
+                        getActivity().finish();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat connection timeout failed", e);
+
+                    }
+                })
+        );
+        // onNewMessageListener
+        mListenersDisposable.add(mSocketManager.createMessageListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableObserver<JSONObject>() {
+                    @Override
+                    public void onNext(JSONObject messageData) {
+                        String username;
+                        String message;
+                        try {
+                            username = messageData.getString("user");
+                            message = messageData.getString("message");
+                        } catch (JSONException e) {
+                            Log.e(TAG, "run: ", e);
+                            return;
+                        }
+
+                        hideTyping(username);
+                        addMessage(username, message);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                })
+        );
+        //onTyping/onStopTyping
+        mListenersDisposable.add(mSocketManager.createTypingListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableObserver<JSONObject>() {
+                    @Override
+                    public void onNext(JSONObject typingData) {
+                        String username;
+                        boolean isTyping;
+                        try {
+                            username = typingData.getString("user");
+                            isTyping = typingData.getBoolean("typing");
+
+                        } catch (JSONException e) {
+                            return;
+                        }
+                        if (isTyping) {
+                            hideTyping(username);
+                        } else {
+                            showTyping(username);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                }));
+
+        // Ensure that connection is established
+        mSocketManager.connect();
+    }
+
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -151,7 +291,7 @@ public class ChatFragment extends Fragment {
             @Override
             public boolean onEditorAction(TextView v, int id, KeyEvent event) {
                 if (id == R.id.send || id == EditorInfo.IME_NULL) {
-                    attemptSend();
+                    sendMessage();
                     return true;
                 }
                 return false;
@@ -165,11 +305,10 @@ public class ChatFragment extends Fragment {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (null == mUsername) return;
-                if (!mSocket.connected()) return;
 
                 if (!mTyping) {
                     mTyping = true;
-                    mSocket.emit("typing");
+                    mSocketManager.startTyping();
                 }
 
                 mTypingHandler.removeCallbacks(onTypingTimeout);
@@ -185,31 +324,13 @@ public class ChatFragment extends Fragment {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                attemptSend();
+                sendMessage();
             }
         });
     }
 
     @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (Activity.RESULT_OK != resultCode) {
-            getActivity().finish();
-            return;
-        }
-
-        mUsername = data.getStringExtra("user");
-
-//        int numUsers = data.getIntExtra("numUsers", 1);
-
-        addLog(getResources().getString(R.string.message_welcome));
-//        addParticipantsLog(numUsers);
-    }
-
-    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-
-        // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_chat, menu);
     }
 
@@ -224,17 +345,6 @@ public class ChatFragment extends Fragment {
 
         return super.onOptionsItemSelected(item);
     }
-
-    private void addLog(String message) {
-        mMessages.add(new Message.Builder("none", Message.TYPE_LOG)
-                .message(message).build());
-        mAdapter.notifyItemInserted(mMessages.size() - 1);
-        scrollToBottom();
-    }
-
-//    private void addParticipantsLog(int numUsers) {
-//        mToolbarUpdater.setSubtitle(getResources().getQuantityString(R.plurals.message_participants, numUsers, numUsers));
-//    }
 
     private void addAllMessages(List<Question> messages) {
         for (Question message : messages) {
@@ -254,14 +364,14 @@ public class ChatFragment extends Fragment {
         scrollToBottom();
     }
 
-    private void addTyping(String username) {
+    private void showTyping(String username) {
         mMessages.add(new Message.Builder("none", Message.TYPE_ACTION)
                 .username(username).build());
         mAdapter.notifyItemInserted(mMessages.size() - 1);
         scrollToBottom();
     }
 
-    private void removeTyping(String username) {
+    private void hideTyping(String username) {
         for (int i = mMessages.size() - 1; i >= 0; i--) {
             Message message = mMessages.get(i);
             if (message.getType() == Message.TYPE_ACTION && message.getUsername().equals(username)) {
@@ -271,12 +381,8 @@ public class ChatFragment extends Fragment {
         }
     }
 
-    private void attemptSend() {
+    private void sendMessage() {
         if (null == mUsername) return;
-        if (!mSocket.connected()) {
-            mSocket.connect();
-            return;
-        }
 
         mTyping = false;
 
@@ -287,9 +393,6 @@ public class ChatFragment extends Fragment {
         }
 
         mInputMessageView.setText("");
-//        addMessage(mUsername, message);
-
-        // perform the sending message attempt.
 
         JSONObject obj = new JSONObject();
         try {
@@ -297,10 +400,10 @@ public class ChatFragment extends Fragment {
             obj.put("type", Message.TYPE_MESSAGE_OWN);
             obj.put("course", Question.DEFAULT_COURSE);
             obj.put("questionId", mQuestion.getId());
-            mSocket.emit("new message", obj);
+            mSocketManager.sendMessage(obj);
 
         } catch (JSONException e) {
-            Log.e(TAG, "attemptSend: ", e);
+            Log.e(TAG, "sendMessage: ", e);
         }
     }
 
@@ -312,43 +415,14 @@ public class ChatFragment extends Fragment {
 
     private void leave() {
         mUsername = null;
-        mSocket.disconnect();
-        mSocket.connect();
+        mListenersDisposable.dispose();
+        mSocketManager.disconnect();
         startSignIn();
     }
 
     private void scrollToBottom() {
         mMessagesView.scrollToPosition(mAdapter.getItemCount() - 1);
     }
-
-    private Emitter.Listener onConnect = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (!isConnected) {
-                        if (null != mUsername) {
-
-                            JSONObject obj = new JSONObject();
-                            try {
-                                obj.put("user", mUsername);
-                                mSocket.emit("add user", obj);
-                            } catch (JSONException e) {
-                                Log.e(TAG, "attemptSend: ", e);
-                            }
-
-                        } else {
-                            getActivity().finish();
-                        }
-                        isConnected = true;
-                    }
-                }
-            });
-        }
-    };
-
-    private Toast mToast;
 
     private void showToast(int stringResourceId) {
         if (mToast != null) {
@@ -358,137 +432,40 @@ public class ChatFragment extends Fragment {
         mToast.show();
     }
 
-    private Emitter.Listener onDisconnect = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    isConnected = false;
-//                    showToast(R.string.disconnect);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onConnectError = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    showToast(R.string.error_connect);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onNewMessage = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    String message;
-                    try {
-                        username = data.getString("user");
-                        message = data.getString("message");
-                    } catch (JSONException e) {
-                        Log.e(TAG, "run: ", e);
-                        return;
-                    }
-                    Log.d(TAG, "run: " + data.toString());
-
-                    removeTyping(username);
-                    addMessage(username, message);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onTyping = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    try {
-                        username = data.getString("user");
-                    } catch (JSONException e) {
-                        return;
-                    }
-                    addTyping(username);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onStopTyping = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    try {
-                        username = data.getString("user");
-                    } catch (JSONException e) {
-                        return;
-                    }
-                    removeTyping(username);
-                }
-            });
-        }
-    };
-
     private Runnable onTypingTimeout = new Runnable() {
         @Override
         public void run() {
             if (!mTyping) return;
-
             mTyping = false;
+            mSocketManager.stopTyping();
 
-            JSONObject obj = new JSONObject();
-            try {
-
-                obj.put("user", mUsername);
-                mSocket.emit("stop typing", obj);
-
-            } catch (JSONException e) {
-                Log.e(TAG, "attemptSend: ", e);
-            }
         }
     };
 
 
     public void fetchFailed(Exception e) {
         Log.e(TAG, "fetchFailed: ", e);
-        getActivity().finish();
+        if(getActivity() != null) {
+            getActivity().finish();
+        }
 
     }
 
     public void onQuestionInfoLoaded(Question question) {
         mQuestion = question;
-//            mToolbarUpdater.setTitle(mQuestion.getCourseId());
 
         inflateQuestionDetails();
 
         JSONObject obj = new JSONObject();
         try {
             obj.put("room", mQuestion.getId());
-            mSocket.emit("select room", obj);
+            mSocketManager.selectRoom(obj);
         } catch (JSONException e) {
-            Log.e(TAG, "attemptSend: ", e);
+            Log.e(TAG, "sendMessage: ", e);
         }
     }
 
     public void onMessagesLoaded(List<Question> messages) {
-//            mToolbarUpdater.setTitle(mQuestion.getCourseId());
         addAllMessages(messages);
     }
 
@@ -509,8 +486,6 @@ public class ChatFragment extends Fragment {
         mQuestionView = (TextView) view.findViewById(R.id.question_message);
         mUpvotesView = (TextView) view.findViewById(R.id.label_upvotes);
         mSolvedIcon = (ImageView) view.findViewById(R.id.icon_solved);
-        mUpvoteButton = (ImageButton) view.findViewById(R.id.button_upvote_question);
-        mDownvoteButton = (ImageButton) view.findViewById(R.id.button_downvote_question);
 
     }
 

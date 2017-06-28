@@ -61,9 +61,9 @@ public class ChatActivity extends AppCompatActivity {
     public void onAttachFragment(Fragment fragment) {
         super.onAttachFragment(fragment);
         if (fragment instanceof ChatFragment) {
-            // TODO: ensure garbage collection
             final ChatFragment chatFragment = (ChatFragment) fragment;
-            //TODO: combine results into. Zip?
+            // TODO: combine results. Zip perhaps?
+            // TODO: ensure garbage collection
             fetchQuestionInfo(chatFragment);
             fetchQuestionThread(chatFragment);
         }
