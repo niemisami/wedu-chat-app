@@ -268,21 +268,21 @@ public class SocketManager {
     }
 
     /**
-     * <pre>userData: {
-     *     messageId: String
-     *  }</pre>
-     */
-    public void downvote(JSONObject voteData) {
-        mSocket.emit(EVENT_DOWNVOTE, voteData);
-    }
-
-    /**
      * <pre>: {
      *     messageId: String
      *  }</pre>
      */
     public void upvote(JSONObject voteData) {
         mSocket.emit(EVENT_UPVOTE, voteData);
+    }
+
+    /**
+     * <pre>userData: {
+     *     messageId: String
+     *  }</pre>
+     */
+    public void downvote(JSONObject voteData) {
+        mSocket.emit(EVENT_DOWNVOTE, voteData);
     }
 
 

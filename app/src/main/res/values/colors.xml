@@ -28,16 +28,16 @@
     <!--<color name="username10">#FFEB3B</color>-->
     <!--<color name="username11">#FFC107</color>-->
 
-    <color name="username0">#BDBDBD</color>
-    <color name="username1">#9E9E9E</color>
-    <color name="username2">#78909C</color>
-    <color name="username3">#607D8B</color>
+    <color name="username0">#FFD600</color>
+    <color name="username1">#FF9100</color>
+    <color name="username2">#2979FF</color>
+    <color name="username3">#00B0FF</color>
     <color name="username4">#00BCD4</color>
     <color name="username5">#00ACC1</color>
-    <color name="username6">#FFEB3B</color>
-    <color name="username7">#FDD835</color>
-    <color name="username8">#1976D2</color>
-    <color name="username9">#0288D1</color>
+    <color name="username6">#F50057</color>
+    <color name="username7">#D500F9</color>
+    <color name="username8">#00E676</color>
+    <color name="username9">#1DE9B6</color>
     <color name="username10">#0097A7</color>
 
 

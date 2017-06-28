@@ -26,17 +26,15 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.github.nkzawa.emitter.Emitter;
-import com.github.nkzawa.socketio.client.Socket;
 import com.niemisami.wedu.MainActivity;
 import com.niemisami.wedu.R;
-import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.chat.ChatActivity;
 import com.niemisami.wedu.chat.Message;
 import com.niemisami.wedu.course.QuestionsAdapter;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.settings.SettingsActivity;
 import com.niemisami.wedu.settings.WeduPreferenceHelper;
+import com.niemisami.wedu.socket.SocketManager;
 import com.niemisami.wedu.utils.FabUpdater;
 import com.niemisami.wedu.utils.MessageApiService;
 import com.niemisami.wedu.utils.MessageJsonParser;
@@ -49,8 +47,11 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.observers.DisposableCompletableObserver;
+import io.reactivex.observers.DisposableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
 
@@ -65,8 +66,14 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     private static final int REQUEST_LOGIN = 0;
 
+    private SocketManager mSocketManager;
+    private CompositeDisposable mListenersDisposable;
+
     private ToolbarUpdater mToolbarUpdater;
     private FabUpdater mFabUpdater;
+
+    private String mUsername;
+
     private RecyclerView mQuestionsView;
     private RelativeLayout mQuestionInputContainer;
     private EditText mQuestionInputField;
@@ -74,12 +81,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     private TextView mWelcomeText;
     private List<Question> mQuestions;
     private QuestionsAdapter mAdapter;
-    private String mUsername;
-    private Socket mSocket;
-
-    private Boolean isConnected = false;
-
-    private CompositeDisposable mDisposable;
+    private Toast mToast;
 
 
     public QuestionsFragment() {
@@ -119,7 +121,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                     }
                 });
 
-        mDisposable = new CompositeDisposable();
+        mSocketManager = SocketManager.getSocketManager();
+        mListenersDisposable = new CompositeDisposable();
 
     }
 
@@ -133,6 +136,10 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             } else {
                 mQuestions = questions;
                 mAdapter.setQuestions(mQuestions);
+                // Hide welcome text
+                if (mWelcomeText.getVisibility() == View.VISIBLE) {
+                    mWelcomeText.setVisibility(View.GONE);
+                }
             }
             if (mQuestions.size() > 0)
                 mToolbarUpdater.setTitle(mQuestions.get(0).getCourseId());
@@ -154,24 +161,219 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     public void onResume() {
         super.onResume();
 
-        WeduApplication app = (WeduApplication) getActivity().getApplication();
-        mSocket = app.getSocket();
-        mSocket.on(Socket.EVENT_CONNECT, onConnect);
-        mSocket.on(Socket.EVENT_DISCONNECT, onDisconnect);
-        mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectError);
-        mSocket.on(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        mSocket.on("new message", onNewQuestion);
-        mSocket.on("user joined", onUserJoined);
-        mSocket.on("user left", onUserLeft);
-        mSocket.on("voted", onVoted);
-
         mUsername = WeduPreferenceHelper.getUsername(getActivity());
-
         if (mUsername == null || mUsername.length() == 0) {
             startSignIn();
         }
-        mSocket.connect();
+
+        createSocketListeners();
     }
+
+    private void createSocketListeners() {
+        //onConnect
+        mListenersDisposable.add(mSocketManager.createConnectionListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        JSONObject obj = new JSONObject();
+                        try {
+                            obj.put("user", mUsername);
+                            mSocketManager.addUser(obj);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "sendMessage: ", e);
+                        }
+
+                        obj = new JSONObject();
+                        try {
+                            obj.put("room", "test-course");
+                            mSocketManager.selectRoom(obj);
+                        } catch (JSONException e) {
+                            Log.e(TAG, "sendMessage: ", e);
+                        }
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat connection failed", e);
+                        showToast(R.string.error_connection_lost);
+                        getActivity().finish();
+                    }
+                })
+        );
+        //onDisconnect
+        mListenersDisposable.add(mSocketManager.createDisconnectionListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "Chat disconnected");
+                        showToast(R.string.error_connection_lost);
+                        getActivity().finish();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat disconnection failed", e);
+                        getActivity().finish();
+
+                    }
+                })
+        );
+        //onConnectError
+        mListenersDisposable.add(mSocketManager.createConnectErrorListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "Chat connection error");
+                        getActivity().finish();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat connection error failed", e);
+
+                    }
+                })
+        );
+        //onConnectTimeout
+        mListenersDisposable.add(mSocketManager.createConnectTimeoutListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableCompletableObserver() {
+                    @Override
+                    public void onComplete() {
+                        Log.d(TAG, "Chat connection timeout");
+                        getActivity().finish();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Chat connection timeout failed", e);
+
+                    }
+                })
+        );
+        // onNewMessageListener
+        mListenersDisposable.add(mSocketManager.createMessageVotedListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableObserver<JSONObject>() {
+                    @Override
+                    public void onNext(JSONObject messageData) {
+                        String messageId = "";
+                        int gradedQuestionPosition = -1;
+                        int upVotes;
+                        try {
+                            messageId = messageData.getString("messageId");
+
+                            JSONArray upVotedUsers = messageData.getJSONObject("grade").getJSONArray("upvotes");
+                            JSONArray downVotedUsers = messageData.getJSONObject("grade").getJSONArray("downvotes");
+
+                            upVotes = upVotedUsers.length() - downVotedUsers.length();
+
+                            gradedQuestionPosition = findQuestionPositionWithId(messageId);
+
+                        } catch (JSONException e) {
+                            Log.e(TAG, "onVoted. Couldn't parse message json with id: " + messageId);
+                            return;
+                        } catch (Resources.NotFoundException e) {
+                            Log.e(TAG, "onVoted. Didn't find question with id: " + messageId);
+                            return;
+                        }
+
+                        Question gradedQuestion = mQuestions.get(gradedQuestionPosition);
+
+                        final Question votedQuestion = gradedQuestion.toBuilder().upvotes(upVotes).build();
+                        mQuestions.remove(gradedQuestionPosition);
+                        mQuestions.add(gradedQuestionPosition, votedQuestion);
+                        mAdapter.notifyDataSetChanged();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                })
+        );
+        // onNewQuestionListener
+        mListenersDisposable.add(mSocketManager.createMessageListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableObserver<JSONObject>() {
+                    @Override
+                    public void onNext(JSONObject questionData) {
+                        Question question;
+                        if (MessageJsonParser.parseMessageType(questionData) == Question.TYPE_MESSAGE_QUESTION) {
+                            question = MessageJsonParser.parseQuestion(questionData);
+                        } else {
+                            return;
+                        }
+                        addQuestion(question);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                })
+        );
+
+        // Combine both user left and join observables into a one disposable
+        Observable<JSONObject> userJoined = mSocketManager.createUserJoinedListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+        Observable<JSONObject> userLeft = mSocketManager.createUserLeftListener()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+
+        mListenersDisposable.add(Observable.merge(userJoined, userLeft)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(new DisposableObserver<JSONObject>() {
+                    @Override
+                    public void onNext(JSONObject data) {
+                        int numUsers;
+                        try {
+                            numUsers = data.getInt("numUsers");
+                        } catch (JSONException e) {
+                            return;
+                        }
+                        addParticipantsLog(numUsers);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                })
+        );
+
+
+        // Ensure that connection is established
+        mSocketManager.connect();
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -183,24 +385,15 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     }
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public void onPause() {
+        super.onPause();
+        mListenersDisposable.dispose();
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
-        mSocket.disconnect();
-
-        mSocket.off(Socket.EVENT_CONNECT, onConnect);
-        mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
-        mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
-        mSocket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
-        mSocket.off("new message", onNewQuestion);
-        mSocket.off("user joined", onUserJoined);
-        mSocket.off("user left", onUserLeft);
-        mSocket.off("voted", onVoted);
-        isConnected = false;
+    public void onDestroy() {
+        super.onDestroy();
+        mSocketManager.disconnect();
     }
 
 
@@ -232,8 +425,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         mSendQuestionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptSend();
-                //TODO better place for these
+                sendQuestion();
                 mQuestionInputContainer.setVisibility(View.GONE);
                 mFabUpdater.showFab();
             }
@@ -244,8 +436,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             @Override
             public boolean onEditorAction(TextView v, int id, KeyEvent event) {
                 if (id == R.id.send || id == EditorInfo.IME_NULL) {
-                    attemptSend();
-                    //TODO better place for these
+                    sendQuestion();
                     mQuestionInputContainer.setVisibility(View.GONE);
                     mFabUpdater.showFab();
                     return true;
@@ -282,8 +473,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     }
 
     private void addParticipantsLog(int numUsers) {
-
-        // TODO: come up with better place to check welcome text. It is hidden when new question is added in attemptSend()
         if (mAdapter.getItemCount() == 0) {
             mWelcomeText.setVisibility(View.VISIBLE);
         } else {
@@ -298,7 +487,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         if (mWelcomeText.getVisibility() == View.VISIBLE) {
             mWelcomeText.setVisibility(View.GONE);
         }
-
         mQuestions.add(question);
         mAdapter.notifyItemInserted(mQuestions.size() - 1);
     }
@@ -328,7 +516,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     private void leave() {
         mUsername = null;
-        mSocket.disconnect();
+        mListenersDisposable.dispose();
+        mSocketManager.disconnect();
         WeduPreferenceHelper.clearUsername(getActivity());
         startSignIn();
     }
@@ -339,24 +528,16 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         startActivityForResult(intent, REQUEST_LOGIN);
     }
 
-    private void scrollToBottom() {
-        mQuestionsView.scrollToPosition(mAdapter.getItemCount() - 1);
-    }
 
-
-    private void attemptSend() {
+    private void sendQuestion() {
         if (null == mUsername) return;
-        if (!mSocket.connected()) return;
 
         String message = mQuestionInputField.getText().toString().trim();
         if (TextUtils.isEmpty(message)) {
             mQuestionInputField.requestFocus();
             return;
         }
-
         mQuestionInputField.setText("");
-//        addMessage(mUsername, message);
-
         // perform the sending message attempt.
 
         JSONObject obj = new JSONObject();
@@ -364,181 +545,12 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             obj.put("message", message.trim());
             obj.put("type", Message.TYPE_MESSAGE_QUESTION);
             obj.put("course", Question.DEFAULT_COURSE);
-            mSocket.emit("new message", obj);
+            mSocketManager.sendMessage(obj);
 
         } catch (JSONException e) {
-            Log.e(TAG, "attemptSend: ", e);
+            Log.e(TAG, "sendQuestion: ", e);
         }
     }
-
-
-    private Emitter.Listener onConnect = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            getActivity().runOnUiThread(
-                    new Runnable() {
-                        @Override
-                        public void run() {
-                            if (!isConnected) {
-                                if (null != mUsername) {
-
-                                    JSONObject obj = new JSONObject();
-                                    try {
-                                        obj.put("user", mUsername);
-                                        mSocket.emit("add user", obj);
-
-                                        obj.put("room", Question.DEFAULT_COURSE);
-                                        mSocket.emit("select room", obj);
-                                    } catch (JSONException e) {
-                                        Log.e(TAG, "attemptSend: ", e);
-                                    }
-
-                                } else {
-                                    getActivity().finish();
-                                }
-                                isConnected = true;
-                            }
-                        }
-                    }
-            );
-        }
-    };
-
-    private Emitter.Listener onDisconnect = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    isConnected = false;
-//                    showToast(R.string.disconnect);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onConnectError = new Emitter.Listener() {
-        @Override
-        public void call(Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    showToast(R.string.error_connect);
-                    mQuestions.clear();
-                    mAdapter.setQuestions(mQuestions);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onNewQuestion = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-
-                    Question question = null;
-                    try {
-                        if (MessageJsonParser.parseMessageType(data) == Question.TYPE_MESSAGE_QUESTION) {
-                            question = MessageJsonParser.parseQuestion(data);
-                        } else {
-                            return;
-                        }
-                    } catch (NullPointerException e) {
-                        Log.e(TAG, "run: ", e);
-                    }
-                    addQuestion(question);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onUserJoined = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    int numUsers;
-                    try {
-                        username = data.getString("user");
-                        numUsers = data.getInt("numUsers");
-                    } catch (JSONException e) {
-                        return;
-                    }
-
-                    addParticipantsLog(numUsers);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onUserLeft = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String username;
-                    int numUsers;
-                    try {
-                        username = data.getString("user");
-                        numUsers = data.getInt("numUsers");
-                    } catch (JSONException e) {
-                        return;
-                    }
-
-                    addParticipantsLog(numUsers);
-                }
-            });
-        }
-    };
-
-    private Emitter.Listener onVoted = new Emitter.Listener() {
-        @Override
-        public void call(final Object... args) {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    JSONObject data = (JSONObject) args[0];
-                    String messageId = "";
-                    int gradedQuestionPosition = -1;
-                    int upvotes;
-                    try {
-                        messageId = data.getString("messageId");
-
-                        JSONArray upvotedUsers = data.getJSONObject("grade").getJSONArray("upvotes");
-                        JSONArray downvotedUsers = data.getJSONObject("grade").getJSONArray("downvotes");
-
-                        upvotes = upvotedUsers.length() - downvotedUsers.length();
-
-                        gradedQuestionPosition = findQuestionPositionWithId(messageId);
-
-                    } catch (JSONException e) {
-                        Log.e(TAG, "onVoted. Couldn't parse message json with id: " + messageId);
-                        return;
-                    } catch (Resources.NotFoundException e) {
-                        Log.e(TAG, "onVoted. Didn't find question with id: " + messageId);
-                        return;
-                    }
-
-
-                    Question gradedQuestion = mQuestions.get(gradedQuestionPosition);
-
-                    final Question downvotedQuestion = gradedQuestion.toBuilder().upvotes(upvotes).build();
-                    mQuestions.remove(gradedQuestionPosition);
-                    mQuestions.add(gradedQuestionPosition, downvotedQuestion);
-                    mAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-    };
-
 
     /**
      * Find message with given ID and return the position in Questions array
@@ -564,7 +576,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             JSONObject obj = new JSONObject();
             try {
                 obj.put("messageId", votedQuestion.getId());
-                mSocket.emit("upvote", obj);
+                mSocketManager.upvote(obj);
 
             } catch (JSONException e) {
                 Log.e(TAG, "onUpvoteClick: ", e);
@@ -585,7 +597,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             JSONObject obj = new JSONObject();
             try {
                 obj.put("messageId", votedQuestion.getId());
-                mSocket.emit("downvote", obj);
+                mSocketManager.downvote(obj);
 
             } catch (JSONException e) {
                 Log.e(TAG, "onDownvoteClick: ", e);
@@ -622,24 +634,17 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             inputMethodManager.toggleSoftInputFromWindow(
                     requestingImeView.getApplicationWindowToken(),
                     InputMethodManager.SHOW_FORCED, 0);
-
-//            activity.getWindow()
-//                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         }
     }
 
     public static void hideKeyboard(Activity activity, View requestingImeView) {
 
         if (activity != null && requestingImeView != null) {
-//            activity.getWindow()
-//                    .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
-
             InputMethodManager inputMethodManager = (InputMethodManager) activity.getSystemService(INPUT_METHOD_SERVICE);
             inputMethodManager.hideSoftInputFromWindow(requestingImeView.getWindowToken(), 0);
         }
     }
 
-    private Toast mToast;
 
     private void showToast(int stringResourceId) {
         if (mToast != null) {

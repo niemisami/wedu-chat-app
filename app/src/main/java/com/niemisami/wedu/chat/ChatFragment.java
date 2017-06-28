@@ -62,7 +62,6 @@ public class ChatFragment extends Fragment {
     private String mUsername;
 
     private Question mQuestion;
-    private Boolean isConnected = false;
 
     private ToolbarUpdater mToolbarUpdater;
 
@@ -94,7 +93,6 @@ public class ChatFragment extends Fragment {
         setHasOptionsMenu(true);
         mSocketManager = SocketManager.getSocketManager();
         mListenersDisposable = new CompositeDisposable();
-        setRetainInstance(true);
     }
 
     @Override
@@ -116,13 +114,6 @@ public class ChatFragment extends Fragment {
     public void onPause() {
         super.onPause();
         mListenersDisposable.dispose();
-        isConnected = false;
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        mSocketManager.disconnect();
     }
 
 
@@ -407,18 +398,21 @@ public class ChatFragment extends Fragment {
         }
     }
 
+
+    private void leave() {
+        mUsername = null;
+        mListenersDisposable.dispose();
+        mSocketManager.disconnect();
+        WeduPreferenceHelper.clearUsername(getActivity());
+        startSignIn();
+    }
+
     private void startSignIn() {
         mUsername = null;
         Intent intent = new Intent(getActivity(), LoginActivity.class);
         startActivityForResult(intent, REQUEST_LOGIN);
     }
 
-    private void leave() {
-        mUsername = null;
-        mListenersDisposable.dispose();
-        mSocketManager.disconnect();
-        startSignIn();
-    }
 
     private void scrollToBottom() {
         mMessagesView.scrollToPosition(mAdapter.getItemCount() - 1);
@@ -445,7 +439,7 @@ public class ChatFragment extends Fragment {
 
     public void fetchFailed(Exception e) {
         Log.e(TAG, "fetchFailed: ", e);
-        if(getActivity() != null) {
+        if (getActivity() != null) {
             getActivity().finish();
         }
 
