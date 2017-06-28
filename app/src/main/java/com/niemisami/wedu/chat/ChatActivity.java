@@ -12,8 +12,13 @@ import android.view.MenuItem;
 import com.niemisami.wedu.R;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.settings.SettingsActivity;
-import com.niemisami.wedu.utils.MessageFetchTask;
-import com.niemisami.wedu.utils.WeduNetworkCallbacks;
+import com.niemisami.wedu.utils.MessageApiService;
+
+import java.util.List;
+
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
 
 public class ChatActivity extends AppCompatActivity {
 
@@ -55,11 +60,49 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     public void onAttachFragment(Fragment fragment) {
         super.onAttachFragment(fragment);
-        if (fragment instanceof WeduNetworkCallbacks) {
-            String requestUrl = "getMessage/" + mQuestionId;
-            new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(requestUrl);
+        if (fragment instanceof ChatFragment) {
+            // TODO: ensure garbage collection
+            final ChatFragment chatFragment = (ChatFragment) fragment;
+            //TODO: combine results into. Zip?
+            fetchQuestionInfo(chatFragment);
+            fetchQuestionThread(chatFragment);
         }
     }
+
+    private void fetchQuestionInfo(final ChatFragment chatFragment) {
+        MessageApiService.getQuestionInfo(mQuestionId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new DisposableSingleObserver<Question>() {
+                    @Override
+                    public void onSuccess(Question question) {
+                        chatFragment.onQuestionInfoLoaded(question);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        chatFragment.fetchFailed(new Exception("Failed to fetch question information"));
+                    }
+                });
+    }
+
+    private void fetchQuestionThread(final ChatFragment chatFragment) {
+        MessageApiService.getQuestionThread(mQuestionId)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new DisposableSingleObserver<List<Question>>() {
+                    @Override
+                    public void onSuccess(List<Question> messages) {
+                        chatFragment.onMessagesLoaded(messages);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        chatFragment.fetchFailed(new Exception("Failed to fetch question thread"));
+                    }
+                });
+    }
+
 
     private void inflateFragment() {
         FragmentManager fragmentManager = getSupportFragmentManager();

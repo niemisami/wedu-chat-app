@@ -11,9 +11,7 @@ import android.view.View;
 
 import com.niemisami.wedu.question.QuestionsFragment;
 import com.niemisami.wedu.utils.FabUpdater;
-import com.niemisami.wedu.utils.MessageFetchTask;
 import com.niemisami.wedu.utils.ToolbarUpdater;
-import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
 public class MainActivity extends AppCompatActivity implements ToolbarUpdater, FabUpdater {
 
@@ -60,16 +58,11 @@ public class MainActivity extends AppCompatActivity implements ToolbarUpdater, F
             mFabUpdater = this;
             mOnFabClickListener = (OnFabClickListener) fragment;
         }
-        if (fragment instanceof WeduNetworkCallbacks) {
-            String request = "getQuestions";
-            // TODO: alter AsyncTask to Obeservable
-            new MessageFetchTask(this, (WeduNetworkCallbacks) fragment).execute(request);
-        }
     }
 
     @Override
     public void setTitle(String title) {
-        if(mToolbar != null)
+        if (mToolbar != null)
             mToolbar.setTitle(title);
     }
 

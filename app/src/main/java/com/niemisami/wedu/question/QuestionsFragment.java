@@ -38,9 +38,9 @@ import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.settings.SettingsActivity;
 import com.niemisami.wedu.settings.WeduPreferenceHelper;
 import com.niemisami.wedu.utils.FabUpdater;
+import com.niemisami.wedu.utils.MessageApiService;
 import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.ToolbarUpdater;
-import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,13 +49,19 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
+
 import static android.content.ContentValues.TAG;
 import static android.content.Context.INPUT_METHOD_SERVICE;
+import static com.niemisami.wedu.R.id.questions;
 
 /**
  * A simple {@link Fragment} subclass.
  */
-public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler, MainActivity.OnFabClickListener, WeduNetworkCallbacks {
+public class QuestionsFragment extends Fragment implements QuestionsAdapter.QuestionOnClickHandler, MainActivity.OnFabClickListener {
 
     private static final int REQUEST_LOGIN = 0;
 
@@ -72,6 +78,8 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     private Socket mSocket;
 
     private Boolean isConnected = false;
+
+    private CompositeDisposable mDisposable;
 
 
     public QuestionsFragment() {
@@ -94,7 +102,53 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
+
+        // TODO: ensure garbage collection
+        MessageApiService.getQuestions()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new DisposableSingleObserver<List<Question>>() {
+                    @Override
+                    public void onSuccess(List<Question> questions) {
+                        onQuestionsLoaded(questions);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        fetchFailed(new Exception("Failed to fetch questions"));
+                    }
+                });
+
+        mDisposable = new CompositeDisposable();
+
     }
+
+    public void onQuestionsLoaded(List<Question> questions) {
+        try {
+
+            if (questions.size() < 10) {
+                for (Question q : questions) {
+                    addQuestion(q);
+                }
+            } else {
+                mQuestions = questions;
+                mAdapter.setQuestions(mQuestions);
+            }
+            if (mQuestions.size() > 0)
+                mToolbarUpdater.setTitle(mQuestions.get(0).getCourseId());
+
+        } catch (NullPointerException e) {
+            Log.e(TAG, "onResponse: ", e);
+        }
+    }
+
+    //TODO: Display errors etc
+    public void fetchFailed(Exception e) {
+        Log.e(TAG, "fetchFailed: ", e);
+        getActivity().finish();
+
+    }
+
 
     @Override
     public void onResume() {
@@ -156,7 +210,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
         mQuestions = new ArrayList<>();
 
-        mQuestionsView = (RecyclerView) view.findViewById(R.id.questions);
+        mQuestionsView = (RecyclerView) view.findViewById(questions);
         mQuestionsView.setLayoutManager(new LinearLayoutManager(getActivity()));
         mQuestionsView.setAdapter(mAdapter);
         mAdapter.setQuestions(mQuestions);
@@ -598,43 +652,4 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
     }
 
 
-    @Override
-    public void fetchBegin() {
-        //TODO: displayProgressBar();
-    }
-
-    @Override
-    public void fetchFailed(Exception e) {
-        //TODO: hideProgressBar();
-
-    }
-
-    @Override
-    public void fetchComplete(String data) {
-        //TODO: hideProgressBar();
-        try {
-            final List<Question> questions = MessageJsonParser.parseQuestionList(data);
-            if (getActivity() != null) {
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        if (questions.size() < 10) {
-                            for (Question q : questions) {
-                                addQuestion(q);
-                            }
-                        } else {
-                            mQuestions = questions;
-                            mAdapter.setQuestions(mQuestions);
-                        }
-                        if (mQuestions.size() > 0)
-                            mToolbarUpdater.setTitle(mQuestions.get(0).getCourseId());
-                    }
-                });
-            }
-
-        } catch (NullPointerException e) {
-            Log.e(TAG, "onResponse: ", e);
-        }
-
-    }
 }

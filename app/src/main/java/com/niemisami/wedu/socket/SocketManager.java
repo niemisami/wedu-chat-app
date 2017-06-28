@@ -84,10 +84,10 @@ public class SocketManager {
                 final Emitter.Listener listener = new Emitter.Listener() {
                     @Override
                     public void call(Object... args) {
-                        if(args.length > 0) {
+                        if(args.length > 0 && args[0] instanceof JSONObject) {
                             emitter.onNext((JSONObject) args[0]);
                         } else {
-                            emitter.onError(new Exception("Failed to fetch requested data"));
+                            emitter.onError(new Exception("Failed to handle request"));
                         }
                     }
                 };

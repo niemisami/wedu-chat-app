@@ -1,12 +1,15 @@
 package com.niemisami.wedu.utils;
 
 import android.accounts.NetworkErrorException;
+import android.net.Uri;
 
 import com.niemisami.wedu.question.Question;
 
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,13 +34,13 @@ public class MessageApiService {
     private static final String ENDPOINT_QUESTION_THREAD = "message/getMessages";
     public static final String SERVER_API_URL = SERVER_LOCAL_API_URL;
 
-    public static Single<Question> getQuestionInfo(int mQuestionId) {
-        return fetchWeduData(ENDPOINT_QUESTION_INFO)
+    public static Single<Question> getQuestionInfo(String mQuestionId) {
+        return fetchWeduData(ENDPOINT_QUESTION_INFO + "/" + mQuestionId)
                 .map(new Function<Response, Question>() {
                     @Override
                     public Question apply(Response response) throws Exception {
                         try {
-                            String responseBodyString = response.body().toString();
+                            String responseBodyString = response.body().string();
                             response.close();
                             return MessageJsonParser.parseQuestion(new JSONObject(responseBodyString));
                         } catch (NullPointerException e) {
@@ -52,13 +55,13 @@ public class MessageApiService {
      * Each question has a thread of answers. These message are actually same objects
      * as questions so eventually answers might have more nested messages
      */
-    public static Single<List<Question>> getQuestionThread(int mQuestionId) {
-        return fetchWeduData(ENDPOINT_QUESTION_THREAD)
+    public static Single<List<Question>> getQuestionThread(String mQuestionId) {
+        return fetchWeduData(ENDPOINT_QUESTION_THREAD + "/" + mQuestionId)
                 .map(new Function<Response, List<Question>>() {
                     @Override
                     public List<Question> apply(Response response) throws Exception {
                         try {
-                            String responseBodyString = response.body().toString();
+                            String responseBodyString = response.body().string();
                             response.close(); // Close the response to avoid memory leaks
                             return MessageJsonParser.parseMessageList(new JSONObject(responseBodyString));
                         } catch (NullPointerException e) {
@@ -70,7 +73,7 @@ public class MessageApiService {
     }
 
     /**
-     * Fetch questions from the API and convert string response into list of Question object
+     * Fetch questions from the API and convert string response into a list of Question object
      */
     public static Single<List<Question>> getQuestions() {
         return fetchWeduData(ENDPOINT_QUESTIONS)
@@ -78,7 +81,7 @@ public class MessageApiService {
                     @Override
                     public List<Question> apply(Response response) throws Exception {
                         try {
-                            String responseBodyString = response.body().toString();
+                            String responseBodyString = response.body().string();
                             response.close(); // Close the response to avoid memory leaks
                             return MessageJsonParser.parseQuestionList(responseBodyString);
                         } catch (NullPointerException e) {
@@ -91,7 +94,15 @@ public class MessageApiService {
 
     private static Single<Response> fetchWeduData(String requestEndpoint) {
         final OkHttpClient client = new OkHttpClient();
-        String url = SERVER_API_URL + requestEndpoint;
+        Uri builtUri = Uri.parse(SERVER_API_URL).buildUpon()
+                .appendEncodedPath(requestEndpoint)
+                .build();
+        URL url = null;
+        try {
+            url = new URL(builtUri.toString());
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
         final Request request = new Request.Builder()
                 .url(url)
                 .build();

@@ -33,10 +33,8 @@ import com.niemisami.wedu.WeduApplication;
 import com.niemisami.wedu.login.LoginActivity;
 import com.niemisami.wedu.question.Question;
 import com.niemisami.wedu.settings.WeduPreferenceHelper;
-import com.niemisami.wedu.utils.MessageJsonParser;
 import com.niemisami.wedu.utils.ToolbarUpdater;
 import com.niemisami.wedu.utils.WeduDateUtils;
-import com.niemisami.wedu.utils.WeduNetworkCallbacks;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,7 +44,7 @@ import java.util.List;
 
 import static android.content.ContentValues.TAG;
 
-public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
+public class ChatFragment extends Fragment {
 
     private static final int REQUEST_LOGIN = 0;
 
@@ -60,7 +58,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     private boolean mTyping = false;
     private Handler mTypingHandler = new Handler();
     private String mUsername;
-    private int mQuestionBackgroundColor;
     private Socket mSocket;
 
     private Boolean isConnected = false;
@@ -89,7 +86,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         super.onCreate(savedInstanceState);
 
         setHasOptionsMenu(true);
-
     }
 
     @Override
@@ -102,8 +98,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         mSocket.off(Socket.EVENT_CONNECT_ERROR, onConnectError);
         mSocket.off(Socket.EVENT_CONNECT_TIMEOUT, onConnectError);
         mSocket.off("new message", onNewMessage);
-//        mSocket.off("user joined", onUserJoined);
-//        mSocket.off("user left", onUserLeft);
         mSocket.off("typing", onTyping);
         mSocket.off("stop typing", onStopTyping);
         isConnected = false;
@@ -414,53 +408,6 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         }
     };
 
-//    private Emitter.Listener onUserJoined = new Emitter.Listener() {
-//        @Override
-//        public void call(final Object... args) {
-//            getActivity().runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    JSONObject data = (JSONObject) args[0];
-//                    String username;
-//                    int numUsers;
-//                    try {
-//                        username = data.getString("user");
-//                        numUsers = data.getInt("numUsers");
-//                    } catch (JSONException e) {
-//                        return;
-//                    }
-//
-//                    addLog(getResources().getString(R.string.message_user_joined, username));
-//                    addParticipantsLog(numUsers);
-//                }
-//            });
-//        }
-//    };
-//
-//    private Emitter.Listener onUserLeft = new Emitter.Listener() {
-//        @Override
-//        public void call(final Object... args) {
-//            getActivity().runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    JSONObject data = (JSONObject) args[0];
-//                    String username;
-//                    int numUsers;
-//                    try {
-//                        username = data.getString("user");
-//                        numUsers = data.getInt("numUsers");
-//                    } catch (JSONException e) {
-//                        return;
-//                    }
-//
-//                    addLog(getResources().getString(R.string.message_user_left, username));
-//                    addParticipantsLog(numUsers);
-//                    removeTyping(username);
-//                }
-//            });
-//        }
-//    };
-
     private Emitter.Listener onTyping = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
@@ -518,61 +465,31 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
         }
     };
 
-    @Override
-    public void fetchBegin() {
-        Log.d(TAG, "fetchBegin: ");
-    }
 
-    @Override
     public void fetchFailed(Exception e) {
         Log.e(TAG, "fetchFailed: ", e);
+        getActivity().finish();
 
     }
 
-    @Override
-    public void fetchComplete(String data) {
-
-        Question question = null;
-        List<Question> messages = null;
-        try {
-            question = MessageJsonParser.parseQuestion(new JSONObject(data));
-            messages = MessageJsonParser.parseMessageList(new JSONObject(data));
-
-
-        } catch (NullPointerException e) {
-            Log.w(TAG, "fetchComplete: null json data", e);
-            getActivity().finish();
-        } catch (JSONException e) {
-            Log.w(TAG, "fetchComplete: null json data", e);
-            getActivity().finish();
-        }
-
-
-        final List<Question> list = messages;
-        if (question != null && messages != null) {
-            mQuestion = question;
+    public void onQuestionInfoLoaded(Question question) {
+        mQuestion = question;
 //            mToolbarUpdater.setTitle(mQuestion.getCourseId());
 
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    inflateQuestionDetails();
-                    addAllMessages(list);
+        inflateQuestionDetails();
 
-                    JSONObject obj = new JSONObject();
-                    try {
-                        obj.put("room", mQuestion.getId());
-                        mSocket.emit("select room", obj);
-                    } catch (JSONException e) {
-                        Log.e(TAG, "attemptSend: ", e);
-                    }
-                }
-            });
-        } else {
-            Log.e(TAG, "fetchComplete: null message");
-            getActivity().finish();
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("room", mQuestion.getId());
+            mSocket.emit("select room", obj);
+        } catch (JSONException e) {
+            Log.e(TAG, "attemptSend: ", e);
         }
+    }
 
+    public void onMessagesLoaded(List<Question> messages) {
+//            mToolbarUpdater.setTitle(mQuestion.getCourseId());
+        addAllMessages(messages);
     }
 
     private void inflateQuestionDetails() {
@@ -616,10 +533,10 @@ public class ChatFragment extends Fragment implements WeduNetworkCallbacks {
     }
 
     private void setQuestionBackgroundColor() {
-        mQuestionBackgroundColor = ((ChatActivity) getActivity()).getQuestionBackgroundColor();
+        int questionBackgroundColor = ((ChatActivity) getActivity()).getQuestionBackgroundColor();
         ((ChatActivity) getActivity()).matchToolbarColorWithQuestion();
         View parent = (View) mCreatedView.getParent();
-        parent.setBackgroundColor(mQuestionBackgroundColor);
+        parent.setBackgroundColor(questionBackgroundColor);
     }
 
     public void setUpvotes(int upvotes) {
