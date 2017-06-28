@@ -16,6 +16,7 @@ import io.reactivex.CompletableOnSubscribe;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Cancellable;
 import io.reactivex.internal.operators.completable.CompletableCreate;
 
@@ -96,10 +97,16 @@ public class SocketManager {
                 };
                 mSocket.on(socketEvent, listener);
 
-                emitter.setCancellable(new Cancellable() {
+                emitter.setDisposable(new Disposable() {
                     @Override
-                    public void cancel() throws Exception {
+                    public void dispose() {
                         mSocket.off(socketEvent, listener);
+
+                    }
+
+                    @Override
+                    public boolean isDisposed() {
+                        return false;
                     }
                 });
             }

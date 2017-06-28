@@ -122,7 +122,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 });
 
         mSocketManager = SocketManager.getSocketManager();
-        mListenersDisposable = new CompositeDisposable();
 
     }
 
@@ -171,6 +170,7 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
 
     private void createSocketListeners() {
         //onConnect
+        mListenersDisposable = new CompositeDisposable();
         mListenersDisposable.add(mSocketManager.createConnectionListener()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -369,7 +369,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 })
         );
 
-
         // Ensure that connection is established
         mSocketManager.connect();
     }
@@ -454,8 +453,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
                 }
             }
         });
-
-
     }
 
     @Override
@@ -564,7 +561,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             }
         }
         throw new Resources.NotFoundException();
-
     }
 
     @Override
@@ -585,7 +581,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         } else {
             Log.w(TAG, "onUpvoteClick: tried to upvote negative index");
         }
-
     }
 
     @Override
@@ -606,7 +601,6 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
         } else {
             Log.w(TAG, "onDownvoteClick: tried to downvote negative index");
         }
-
     }
 
     @Override
@@ -655,6 +649,4 @@ public class QuestionsFragment extends Fragment implements QuestionsAdapter.Ques
             mToast.show();
         }
     }
-
-
 }

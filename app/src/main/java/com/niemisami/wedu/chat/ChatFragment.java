@@ -92,7 +92,6 @@ public class ChatFragment extends Fragment {
 
         setHasOptionsMenu(true);
         mSocketManager = SocketManager.getSocketManager();
-        mListenersDisposable = new CompositeDisposable();
     }
 
     @Override
@@ -106,8 +105,8 @@ public class ChatFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        createSocketListeners();
         mUsername = WeduPreferenceHelper.getUsername(getActivity());
+        createSocketListeners();
     }
 
     @Override
@@ -119,6 +118,7 @@ public class ChatFragment extends Fragment {
 
     private void createSocketListeners() {
         //onConnect
+        mListenersDisposable = new CompositeDisposable();
         mListenersDisposable.add(mSocketManager.createConnectionListener()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
